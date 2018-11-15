@@ -1,0 +1,29 @@
+{
+    "title": "Instance index",
+    "description": "Quinoa instance index definition",
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "properties": {
+        "teacher": {
+            "type": "string"
+        },
+      "slug": {
+            "type": "string"
+        },
+      "year": {
+            "type": "string",
+            "pattern": "[\\d]{4}-[\\d]{4}"
+        },
+      "semester": {
+            "type": "number",
+            "enum": [1, 2]
+        },
+      "campus": {
+            "type": "string",
+            "enum": ["Dijon", "Le Havre", "Menton", "Nancy", "Paris", "Poitiers", "Reims"]
+        },
+      "courseName": {
+            "type": "string"
+        }
+    }
+}

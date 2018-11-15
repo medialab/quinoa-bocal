@@ -1,0 +1,32 @@
+{
+  "name": "bocal-api",
+  "version": "1.0.0",
+  "description": "a simple api for serving fonio archives",
+  "main": "index.js",
+  "scripts": {
+    "build-index": "node scripts/build-data",
+    "start": "node server",
+    "dev": "nodemon server"
+  },
+  "nodemonConfig": {
+    "ignore": [
+      "data/*"
+    ],
+    "delay": "500"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "ajv": "^6.5.4",
+    "axios": "^0.18.0",
+    "bcrypt": "^3.0.2",
+    "body-parser": "^1.18.3",
+    "config": "^2.0.1",
+    "cors": "^2.8.4",
+    "express": "^4.16.4",
+    "fs-extra": "^7.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^1.18.5"
+  }
+}

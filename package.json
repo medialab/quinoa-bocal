@@ -1,0 +1,28 @@
+{
+  "name": "quinoa-bocal",
+  "version": "1.0.0",
+  "description": "a quinoa archive management interface",
+  "main": "index.js",
+  "scripts": {
+    "install:api": "cd api;npm install",
+    "install:client": "cd client;npm install",
+    "postinstall": "npm run install:api;npm run install:client",
+    "data:bootstrap": "mkdir api/data;echo \"[]\" > api/data/index.json",
+    "dev": "concurrently --names api,client -c blue,green \"npm run dev:api\" \"npm run dev:client\"",
+    "dev:client": "cd client;npm run dev",
+    "dev:api": "cd api;npm run dev"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/medialab/quinoa-bocal.git"
+  },
+  "author": "medialab",
+  "license": "GPL-3.0-or-later",
+  "bugs": {
+    "url": "https://github.com/medialab/quinoa-bocal/issues"
+  },
+  "homepage": "https://github.com/medialab/quinoa-bocal#readme",
+  "devDependencies": {
+    "concurrently": "^4.0.1"
+  }
+}
