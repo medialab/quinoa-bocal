@@ -7,7 +7,6 @@ A secure flat-file Quinoa archive management system that allows to :
 * fetch stories from an instance
 * tag stories
 
-
 # Install
 
 ```
@@ -16,7 +15,7 @@ cd quinoa-bocal
 npm run data:bootstrap
 ```
 
-# Developing
+# Development
 
 ```
 npm run dev
