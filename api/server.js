@@ -2,20 +2,29 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const config = require('config');
+const  archiver = require('archiver');
+const {v4: genId} = require('uuid');
+const {csvFormat} = require('d3-dsv');
 const serverPassword = config.password;
 const {
   readFile,
   writeFile,
   ensureDir,
+  createWriteStream,
+  createReadStream,
+  remove,
+  copy,
   exists,
 } = require('fs-extra');
 
-const {dataPath, PORT = 3001} = require('config');
+const {dataPath, PORT = 3001, tempPath} = require('config');
 const dataBasePath = path.resolve(__dirname, dataPath);
+const tempBasePath = path.resolve(__dirname, tempPath);
 const tagsPath = `${dataBasePath}/tags.json`
 const bodyParser = require('body-parser');
 
 const {discoverInstance, archiveStory} = require('./scripts/client');
+const buildArchiveIndex = require('./scripts/build-archive-index');
 
 const readIndex = () =>
   new Promise((resolve, reject) => {
@@ -37,6 +46,19 @@ const readIndex = () =>
         }
       })
       .catch(reject);
+  });
+
+const readTags = () => 
+  new Promise((resolve, reject) => {
+    readFile(tagsPath, 'utf8')
+      .then(str => {
+        try{
+          const tags = JSON.parse(str);
+          resolve(tags);
+        } catch(e) {
+          reject(e);
+        }
+      })
   })
     
 
@@ -82,20 +104,147 @@ app.use((req, res, next) => {
 app.use('/api', apiRoutes);
 
 /**
+ * Download a complex archive
+ */
+apiRoutes.post('/archive', (req, res) => {
+  const {body = {}} = req;
+  const {data, items, format, filter, fileName} = body;
+  const jobId = genId();
+  const jobBase = `${tempBasePath}/${jobId}`
+  const outputPath = `${jobBase}/archive/${fileName}.zip`;
+  let index;
+  let tags;
+  readIndex()
+    .then((thatIndex) => {
+      index = thatIndex;
+      return readTags()
+    })
+    .then((theseTags) => {
+      tags = theseTags;
+      return ensureDir(`${jobBase}/data`)
+    })
+    .then(() => ensureDir(`${jobBase}/data`))
+    .then(() => ensureDir(`${jobBase}/archive`))
+    .then(() => {
+      if (!filter) {
+        return copy(dataBasePath, `${jobBase}/data/archive`)
+      } else if (filter.type === 'instance') {
+        const instanceSlug = filter.payload.instanceSlug;  
+        const folderPath = `${dataBasePath}/instances/${instanceSlug}`;
+        return copy(folderPath, `${jobBase}/data/stories`)
+      } else if (filter.type === 'tag') {
+        const tag = filter.payload.tag;
+        const folders = index.reduce((result, instance) => {
+          const storiesIds = instance.stories.map(s => s.id)
+                .filter(sId => tags[sId] && tags[sId].includes(tag));
+          return [
+            ...result,
+            ...storiesIds.map(storyId => ({
+              instanceSlug: instance.slug,
+              storyId
+            }))
+          ]
+        }, [])
+        return Promise.all(
+          folders.map(({instanceSlug, storyId}) => 
+            copy(`${dataBasePath}/instances/${instanceSlug}/${storyId}`, `${jobBase}/data/stories/${storyId}`)
+          )
+        )
+      }
+    })
+    .then(() => {
+      const html = buildArchiveIndex({
+        filter,
+        index,
+        tags
+      })
+      return writeFile(`${jobBase}/data/index.html`, html, 'utf8')
+    })
+    .then(() => {
+      return writeFile(`${jobBase}/data/data.csv`, csvFormat(data), 'utf8')
+    })
+    .then(() => {
+      return new Promise((resolve, reject) => {
+        const output = createWriteStream(outputPath);
+        const archive = archiver('zip', {
+          zlib: { level: 9 } // Sets the compression level.
+        });
+         
+        // good practice to catch warnings (ie stat failures and other non-blocking errors)
+        archive.on('warning', function(err) {
+          if (err.code === 'ENOENT') {
+            // log warning
+            console.warn(err);
+          } else {
+            // throw error
+            res.status(500).send(err);
+            reject(err);
+          }
+        });
+         
+        // good practice to catch this error explicitly
+        archive.on('error', function(err) {
+          res.status(500).send(err);
+          reject(err);
+        });
+         
+        // pipe archive data to the file
+        archive.pipe(output);
+
+        const dirPath = `${tempPath}/${jobId}/data`;
+        archive.directory(dirPath, fileName);
+
+        // finalize the archive (ie we are done appending files but streams have to finish yet)
+        // 'close', 'end' or 'finish' may be fired right after calling this method so register to them beforehand
+        archive.finalize();
+        // listen for all archive data to be written
+        // 'close' event is fired only when a file descriptor is involved
+        output.on('close', function() {
+          console.log(archive.pointer() + ' total bytes');
+          console.log('archiver has been finalized and the output file descriptor has closed.');
+          resolve();
+        });
+         
+        // This event is fired when the data source is drained no matter what was the data source.
+        // It is not part of this library but rather from the NodeJS Stream API.
+        // @see: https://nodejs.org/api/stream.html#stream_event_end
+        output.on('end', function() {
+          console.log('Data has been drained');
+          resolve()
+        });
+      })
+    })
+    .then(() => {
+      return new Promise((resolve, reject) => {
+        res.setHeader('Content-Type', 'application/zip');
+        res.sendFile(outputPath, `${fileName}.zip`, err => {
+          if (err) {
+            reject(err)
+
+          } else {
+            resolve();
+          }
+        });
+      })
+    })
+    .then(() => remove(jobBase))
+    .catch(console.error)
+})
+
+
+/**
  * Get map of tags (keys = story id, values = array of strings)
  */
 apiRoutes.get('/tags/', (req, res) => {
   exists(tagsPath)
     .then(exists => {
       if (exists) {
-        readFile(tagsPath, 'utf8')
-          .then(str => {
-            try{
-              const tags = JSON.parse(str);
-              res.json(tags);
-            } catch(e) {
-              res.status(500).send('bad tags JSON');
-            }
+        readTags()
+          .then(tags => {
+            res.json(tags)
+          })
+          .catch(e => {
+            res.status(500).send('bad tags JSON');
           })
       } else {
         res.json({})
@@ -114,15 +263,13 @@ const updateStoryTags = ({
     .then(exists => {
       return new Promise((resolve, reject) => {
         if (exists) {
-          readFile(tagsPath, 'utf8')
-            .then(str => {
-              try{
-                tags = JSON.parse(str);
-                return resolve();
-              } catch(e) {
-                reject(e);
-              }
+          readTags()
+            .then(theseTags => {
+              tags = theseTags;
+              resolve()
             })
+            .catch(reject);
+
         } else {
           tags = {};
           return resolve();
@@ -340,7 +487,6 @@ apiRoutes.post('/operation', (req, res) => {
                * Return JSON
                */
               .then((tags) => {
-                console.log('done archiving story');
                 res.json({instances, story, tags});                
               });
             break;

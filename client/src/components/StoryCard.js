@@ -5,11 +5,6 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 // import ReactTooltip from 'react-tooltip';
 import trunc from 'unicode-byte-truncate';
 
-
-import {
-  Icon,
-} from 'quinoa-design-library/components/';
-
 const abbrevString = (str = '', maxLength = 20) => {
   if (str.length > maxLength) {
     return `${trunc(str, maxLength)}...`;

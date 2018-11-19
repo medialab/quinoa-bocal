@@ -10,7 +10,8 @@
   },
   "nodemonConfig": {
     "ignore": [
-      "data/*"
+      "data/*",
+      "temp/*"
     ],
     "delay": "500"
   },
@@ -18,13 +19,16 @@
   "license": "ISC",
   "dependencies": {
     "ajv": "^6.5.4",
+    "archiver": "^3.0.0",
     "axios": "^0.18.0",
     "bcrypt": "^3.0.2",
     "body-parser": "^1.18.3",
     "config": "^2.0.1",
     "cors": "^2.8.4",
+    "d3-dsv": "^1.0.10",
     "express": "^4.16.4",
-    "fs-extra": "^7.0.0"
+    "fs-extra": "^7.0.0",
+    "uuid": "^3.3.2"
   },
   "devDependencies": {
     "nodemon": "^1.18.5"

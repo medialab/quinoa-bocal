@@ -3,6 +3,7 @@ import trunc from 'unicode-byte-truncate';
 import {Helmet} from "react-helmet";
 import Tooltip from 'react-tooltip';
 import { injectMessageManager } from 'react-message-manager';
+import {csvFormat} from 'd3-dsv';
 import {
   uniq,
   partition
@@ -15,7 +16,10 @@ import {
   getStoryData,
   updateInstancesList,
   requestOperation,
+  requestArchiveDownload,
 } from './helpers/client';
+
+import download from './helpers/downloadFile';
 
 import PreviewWrapper from './components/PreviewWrapper';
 import SearchInput from './components/SearchInput';
@@ -23,6 +27,7 @@ import StoryCard from './components/StoryCard';
 import ElasticList from './components/ElasticList';
 import StoryMetadataTable from './components/StoryMetadataTable';
 import UpdateModal from './components/UpdateModal';
+import DownloadModal from './components/DownloadModal';
 import TagsManager from './components/TagsManager';
 
 import {
@@ -38,7 +43,6 @@ import './App.css';
 import 'quinoa-design-library/themes/millet/style.css';
 // import 'font-awesome/css/font-awesome.css';
 import { library } from '@fortawesome/fontawesome-svg-core'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
   faSearch, 
   faTags,
@@ -71,6 +75,44 @@ const INSTANCES_TABLE_COLUMNS = [
   {key: 'courseName'  , label: 'Nom du cours'},
   {key: 'teacher' , label: 'Enseignant.e'},
 ];
+
+const formatInstanceForCsv = i => ({
+  'campus': i.campus,
+  'cours': i.courseName,
+  url: i.instanceUrl,
+  'semestre': i.semester,
+  'enseignant.e': i.teacher,
+  'année': i.year,
+  'nombre de récits': i.stories.length,
+  'dernière récupération': new Date(+i.lastFetchAt).toLocaleString(),
+  'dernière récupération (ISO)': new Date(+i.lastFetchAt).toISOString(),
+})
+
+
+const formatStoryForCsv = story => {
+  const {metadata} = story;
+  const csvMetadata = {
+    titre: metadata.title,
+    'sous-titre': metadata.subtitle,
+    auteurs: metadata.authors.sort().join(),
+    'année': metadata.year,
+    semestre: metadata.semester.join(),
+    campus: metadata.campus.sort().join(),
+    cours: metadata.courseName.sort().join(),
+    instance: metadata.instanceSlug,
+    'étiquettes': metadata.tags.sort().join(),
+    'résumé': metadata.abstract,
+    'dernière récupération': new Date(metadata.lastFetchAt).toLocaleString(),
+    'dernière récupération (ISO)': new Date(metadata.lastFetchAt).toISOString(),
+  };
+
+  return {
+    ...csvMetadata,
+    'dernière modification': new Date(story.lastUpdateAt).toLocaleString(),
+    'dernière modification (ISO)': new Date(story.lastUpdateAt).toISOString()
+  };
+}
+
 
 const abbrev = (str = '', maxLength = 10) => {
   if (str.length > maxLength) {
@@ -234,7 +276,7 @@ class App extends Component {
       switch(type) {
         case 'discover-instance':
           requestOperation({operation}, this.state.password)
-            .then(({instances, stories = []}) => {
+            .then(({instances, stories = [], tags}) => {
               const newOperations = stories.map(story => ({
                 type: 'archive-story',
                 payload: {
@@ -243,13 +285,13 @@ class App extends Component {
                   storyTitle: story.metadata.title,
                 }
               }));
-              resolve({instances, newOperations})
+              resolve({instances, newOperations, tags})
             })
           break;
         case 'archive-story':
           requestOperation({operation}, this.state.password)
-            .then(({instances}) => {
-              resolve({instances, newOperations: []})
+            .then(({instances, tags}) => {
+              resolve({instances, newOperations: [], tags})
             })
           break;
         default:
@@ -326,7 +368,6 @@ class App extends Component {
       tagModalStoryId,
       editedInstances = [],
       authenticated,
-      password,
       activeStory,
       searchTerm,
       activeFilters,
@@ -336,6 +377,7 @@ class App extends Component {
       updateViewMode,
       operations,
       operationsStatus,
+      downloadOptionsVisible,
     } = this.state;
     const {
       messageManager,
@@ -363,12 +405,20 @@ class App extends Component {
                 instanceSlug: slug, 
                 teacher, 
                 year,
-                tags: storyTags
+                tags: storyTags,
+                lastFetchAt: instance.lastFetchAt
               }
             }
           })
       ]
     }, []);
+
+    const tagsList = uniq(
+      Object.keys(tags).reduce((mappe, storyId) => [
+      ...mappe,
+      ...tags[storyId]], [])
+    )
+    .filter(t => t.indexOf('metadata:') !== 0);
 
     const visibleStories = Object.keys(activeFilters).reduce((filteredStories, filterKey) => {
       const filterValues = activeFilters[filterKey];
@@ -434,12 +484,12 @@ class App extends Component {
 
     let moreInfoMetadata;
     if (moreInfoStoryId) {
-      moreInfoMetadata = storiesDict[moreInfoStoryId]
+      moreInfoMetadata = storiesDict[moreInfoStoryId];
     }
 
     const enrichInstances = instances => instances.map(instance => ({
       ...instance,
-      slug: instance.instanceUrl.replace(/https?:\/\//, '').replace(/\W/g, '_') // instance.instanceUrl.split('/').filter(p => p.trim().length).pop()
+      slug: instance.instanceUrl.replace(/\/$/, '').replace(/https?:\/\//, '').replace(/\W/g, '_') // instance.instanceUrl.split('/').filter(p => p.trim().length).pop()
     }))
      
 
@@ -482,6 +532,42 @@ class App extends Component {
         })
       })
     }
+
+    const handleDownload = ({items, format, filter}) => {
+      let data;
+      let fileName;
+      if (items === 'instances') {
+        data = instances.map(formatInstanceForCsv);
+        fileName = new Date().toISOString() + ' - toutes les instances quinoa';
+      } else if (items === 'stories') {
+        if (filter) {
+          let filteredStories;
+          let suf = '';
+          if (filter.type === 'instance') {
+            const instanceSlug = filter.payload.instanceSlug;
+            filteredStories = stories.filter(s => s.metadata.instanceSlug === instanceSlug);
+            suf = ` pour l'instance ${instanceSlug}`;
+            fileName = new Date().toISOString() + ' - récits quinoa' + suf;
+            data = filteredStories.map(formatStoryForCsv);
+          } else if (filter.type === 'tag') {
+            const tag = filter.payload.tag;
+            filteredStories = stories.filter(s => s.metadata.tags.includes(tag));
+            suf = ` pour le tag ${tag}`;
+            fileName = new Date().toISOString() + ' - récits quinoa' + suf;
+            data = filteredStories.map(formatStoryForCsv);
+          }
+        } else {
+          data = stories.map(formatStoryForCsv);
+          fileName = new Date().toISOString() + ' - tous les récits quinoa';
+        }
+      }
+      if (format === 'table') {
+        const csv = csvFormat(data);
+        download(csv, 'csv', fileName);
+      } else if (format === 'archive') {
+        requestArchiveDownload({data, items, format, filter, fileName}, this.state.password);
+      }
+    }
     return !authenticated ?
       <ModalCard
         isActive={!authenticated}
@@ -509,11 +595,6 @@ class App extends Component {
                 <header className="header">
                   <h1 className="title is-1">Bocal</h1>
                   <h2 className="title is-5">Administration des archives quinoa</h2>
-                  <Button 
-                    onClick={() => this.setState({updateViewVisible: true})} 
-                    isColor={operationsStatus === 'inactive' ? 'primary' : 'warning'}>
-                    Mettre à jour
-                  </Button>
                 </header>
               </StretchedLayoutItem>
               <StretchedLayoutItem isFlex={1}>
@@ -573,6 +654,18 @@ class App extends Component {
                   </StretchedLayoutItem>
                   <StretchedLayoutItem>
                     {visibleStories.length}/{stories.length} travaux visibles
+                  </StretchedLayoutItem>
+                  <StretchedLayoutItem>
+                    <Button 
+                      onClick={() => this.setState({updateViewVisible: true})} 
+                      isColor={operationsStatus === 'inactive' ? 'primary' : 'warning'}>
+                      Mettre à jour...
+                    </Button>
+                    <Button 
+                      onClick={() => this.setState({downloadOptionsVisible: true})} 
+                      isColor={'info'}>
+                      Télécharger...
+                    </Button>
                   </StretchedLayoutItem>
                 </StretchedLayoutContainer>
               </StretchedLayoutItem>
@@ -672,6 +765,17 @@ class App extends Component {
               })
             }}
             onUpdateInstanceListRequest={handleUpdateInstancesListRequest}
+          />
+          <DownloadModal
+            isActive={downloadOptionsVisible}
+            instances={instances}
+            tags={tagsList}
+            onDownload={handleDownload}
+            onClose={() => {
+              this.setState({
+                downloadOptionsVisible: false
+              })
+            }}
           />
           <Tooltip id="tooltip" />
         </StretchedLayoutContainer>

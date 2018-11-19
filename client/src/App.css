@@ -73,7 +73,7 @@
   color: white;
   border-left: 1px solid white;
   box-sizing: content-box;
-  min-height: 2rem;
+  min-height: 2.5rem;
   font-size: .8rem;
 }
 
@@ -153,5 +153,20 @@ form{
 
 form input[type="text"],
 form input[type="password"] {
+  flex: 1;
+}
+
+.table.flexed{
+  width: 100%;
+}
+
+.table.flexed tr{
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: stretch;
+}
+
+.table.flexed td:first-child,
+.table.flexed th:first-child{
   flex: 1;
 }

@@ -1,14 +1,14 @@
 import React from 'react';
 
 const StoryMetadataTable = ({
-  metadata={}
+  metadata={},
 }) => {
   const form = {
     Titre: metadata.title,
     'Sous-titre': metadata.subtitle,
     Auteurs: (metadata.authors || []).join(', '),
-    'Date de création': new Date(+metadata.createdAt).toLocaleString(),
-    'Dernière modification': new Date(+metadata.lastUpdateAt).toLocaleString(),
+    // 'Date de création': new Date(+metadata.createdAt).toLocaleString(),
+    // 'Dernière modification': new Date(+metadata.lastUpdateAt).toLocaleString(),
     'Instance fonio': metadata.instanceUrl,
     Campus: metadata.campus, 
     'Cours': metadata.courseName, 

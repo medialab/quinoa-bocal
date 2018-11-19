@@ -1,6 +1,6 @@
 import {get, put, post} from 'axios';
 import {apiUri} from '../config/default';
-
+import download from './downloadFile';
 
 export const getAllInstances = (pwd) =>
   get(`${apiUri}`, {headers: {authorization: pwd}})
@@ -30,3 +30,12 @@ export const updateInstancesList = ({instancesList}, pwd) =>
 export const requestOperation = ({operation}, pwd) => 
   post(`${apiUri}operation`, {operation}, {headers: {authorization: pwd}})
     .then(({data}) => Promise.resolve(data))
+
+export const requestArchiveDownload = (data, pwd) =>
+  post(`${apiUri}archive`, data, {
+      headers: {authorization: pwd},
+      responseType: 'blob',
+    })
+    .then(function(response) {
+      download(response.data, 'zip', `${data.fileName}`, 'application/zip');
+    });

@@ -12,13 +12,13 @@ import {
 } from 'quinoa-design-library/components';
 
 const OperationCard = ({operation, allowCancel=false, active, onCancel}) => {
-  let asideActions = [];
-  if (allowCancel) {
-    asideActions = [{
-      label: 'Annuler',
-      id:'cancel'
-    }]
-  }
+  // let asideActions = [];
+  // if (allowCancel) {
+  //   asideActions = [{
+  //     label: 'Annuler',
+  //     id:'cancel'
+  //   }]
+  // }
   let header;
   switch(operation.type) {
     case 'discover-instance':
