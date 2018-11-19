@@ -59,6 +59,9 @@ app.use((req, res, next) => {
 })
 app.use('/api', apiRoutes);
 
+/**
+ * Get map of tags (keys = story id, values = array of strings)
+ */
 apiRoutes.get('/tags/', (req, res) => {
   exists(tagsPath)
     .then(exists => {
@@ -78,6 +81,9 @@ apiRoutes.get('/tags/', (req, res) => {
     })
 })
 
+/**
+ * Update tags list for a specific story
+ */
 apiRoutes.put('/tags/:storyId', (req, res) => {
   let tags;
   const {body = {}} = req;
@@ -115,6 +121,9 @@ apiRoutes.put('/tags/:storyId', (req, res) => {
     })
 })
 
+/**
+ * Get a story JSON
+ */
 apiRoutes.use('/instance/:instanceId/story/:storyId', (req, res) => {
   const instanceId = req.params.instanceId;
   const storyId = req.params.storyId;
@@ -141,31 +150,15 @@ apiRoutes.use('/instance/:instanceId/story/:storyId', (req, res) => {
     })
 });
 
-// apiRoutes.use('/instance/:instanceId', (req, res) => {
-//   const instanceId = req.params.instanceId;
-//   const indexPath = `${dataBasePath}/instances/${instanceId}/index.json`;
-//   readFile(indexPath, 'utf8')
-//     .then(str => {
-//       try{
-//         const index = JSON.parse(str);
-
-//         res.json(index);
-//       } catch(e) {
-//         res.status(500).send(e);
-//       }
-//     })
-//     .catch((error) => {
-//       res.status(500).send(error);
-//     })
-// });
-
-
+/**
+ * Get list of instances
+ */
 apiRoutes.get('', (req, res) => {
   res.json(index)
 });
 
 /**
- * Update instances data
+ * Update instances list data (without related stories)
  */
 apiRoutes.put('', (req, res) => {
   const {body} = req;
@@ -211,7 +204,9 @@ apiRoutes.put('', (req, res) => {
     });  
 });
 
-
+/**
+ * Perform an archiving operation
+ */
 apiRoutes.post('/operation', (req, res) => {
   const {body = {}} = req;
   const {operation} = body;
@@ -254,19 +249,33 @@ apiRoutes.post('/operation', (req, res) => {
             const instance = instances.find(i => i.instanceUrl === operation.payload.instanceUrl);
 
             ensureDir(`${dataPath}/instances/${instance.slug}/${operation.payload.storyId}`)
-              .then(() => archiveStory(operation.payload.instanceUrl, operation.payload.storyId))
+              /**
+               * Save as JSON
+               */
+              .then(() => archiveStory(operation.payload.instanceUrl, operation.payload.storyId, 'json'))
               .then(storyJSON => {
                 story = storyJSON;
                 return writeFile(`${dataPath}/instances/${instance.slug}/${operation.payload.storyId}/${operation.payload.storyId}.json`, JSON.stringify(story), 'utf8')
               })
+              /**
+               * Save as HTML
+               */
+              .then(() => archiveStory(operation.payload.instanceUrl, operation.payload.storyId, 'html'))
+              .then(storyHTML => {
+                return writeFile(`${dataPath}/instances/${instance.slug}/${operation.payload.storyId}/${operation.payload.storyId}.html`, storyHTML, 'utf8')
+              })
+              /**
+               * Return JSON
+               */
               .then(() => {
                 console.log('done archiving story');
                 res.json({instances, story});                
               });
             break;
           default:
-            console.log('unhandled', operation);
-            res.json({instances});
+            console.log('unhandled operation:', operation);
+            res.status(401).send('unhandled operation')
+            // res.json({instances});
             break;
         }
       })

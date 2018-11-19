@@ -14,8 +14,8 @@ const discoverInstance = instanceUrl => {
   })
 }
 
-const archiveStory = (instanceUrl, storyId) => {
-  const uri = `${instanceUrl}/quinoa/api/stories/${storyId}?edit=false&format=json`;
+const archiveStory = (instanceUrl, storyId, format = 'json') => {
+  const uri = `${instanceUrl}/quinoa/api/stories/${storyId}?edit=false&format=${format}`;
 
   return new Promise((resolve, reject) => {
     get(uri)
