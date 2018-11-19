@@ -131,6 +131,7 @@ const Table = ({
                         <input 
                           className="input"
                           value={value || ''} 
+                          placeholder="écrire ici"
                           onChange={handleChange} 
                         />
                       </td>

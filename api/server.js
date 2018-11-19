@@ -17,7 +17,24 @@ const bodyParser = require('body-parser');
 
 const {discoverInstance, archiveStory} = require('./scripts/client');
 
-const index = require(`${dataBasePath}/index.json`);
+let index = [];
+
+ensureDir(dataBasePath)
+  .then(() => {
+    return exists(`${dataBasePath}/index.json`);
+  })
+  .then(exists => {
+    if (!exists) {
+      index = [];
+      return writeFile(`${dataBasePath}/index.json`, '[]', 'utf8')
+    } else {
+      readFile(`${dataBasePath}/index.json`, 'utf8')
+        .then(str => {
+          index = JSON.parse(str)
+        })
+    }
+  })
+
 const app = express();
 app.use(cors());
 
@@ -184,7 +201,6 @@ apiRoutes.put('', (req, res) => {
             stories: []
           }
         });
-        console.log('writing new index', newIndex[0]);
         return writeFile(`${dataBasePath}/index.json`, JSON.stringify(newIndex), 'utf8')
       } catch(e) {
         return Promise.reject(e);
@@ -230,10 +246,16 @@ apiRoutes.post('/operation', (req, res) => {
                   .map(key => storiesMap[key])
                 instances = instances.map(instance => {
                   if (instance.instanceUrl === operation.payload.instanceUrl) {
+                    // fetch deleted stories
+                    // to prevent data loss
+                    const deletedStories = (instance.stories || [])
+                      .filter(story => stories.find(
+                        oStory => oStory.id === story.id
+                      ) === undefined);
                     return {
                       ...instance,
                       lastFetchAt: new Date().getTime(),
-                      stories,
+                      stories: [...deletedStories, ...stories],
                     }
                   }
                   return instance;
