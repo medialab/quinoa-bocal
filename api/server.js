@@ -17,23 +17,28 @@ const bodyParser = require('body-parser');
 
 const {discoverInstance, archiveStory} = require('./scripts/client');
 
-let index = [];
-
-ensureDir(dataBasePath)
-  .then(() => {
-    return exists(`${dataBasePath}/index.json`);
+const readIndex = () =>
+  new Promise((resolve, reject) => {
+    let index;
+    ensureDir(dataBasePath)
+      .then(() => {
+        return exists(`${dataBasePath}/index.json`);
+      })
+      .then(exists => {
+        if (!exists) {
+          index = [];
+          writeFile(`${dataBasePath}/index.json`, '[]', 'utf8')
+        } else {
+          readFile(`${dataBasePath}/index.json`, 'utf8')
+            .then(str => {
+              index = JSON.parse(str)
+              resolve(index)
+            })
+        }
+      })
+      .catch(reject);
   })
-  .then(exists => {
-    if (!exists) {
-      index = [];
-      return writeFile(`${dataBasePath}/index.json`, '[]', 'utf8')
-    } else {
-      readFile(`${dataBasePath}/index.json`, 'utf8')
-        .then(str => {
-          index = JSON.parse(str)
-        })
-    }
-  })
+    
 
 const app = express();
 app.use(cors());
@@ -98,15 +103,14 @@ apiRoutes.get('/tags/', (req, res) => {
     })
 })
 
-/**
- * Update tags list for a specific story
- */
-apiRoutes.put('/tags/:storyId', (req, res) => {
+const updateStoryTags = ({
+  storyTags,
+  storyId,
+  overrideExistingTags = true
+}) => {
   let tags;
-  const {body = {}} = req;
-  const {tags: storyTags = []} = body;
-  const {storyId} = req.params;
-  exists(tagsPath)
+  return new Promise((resolve, reject) => {
+    exists(tagsPath)
     .then(exists => {
       return new Promise((resolve, reject) => {
         if (exists) {
@@ -116,7 +120,7 @@ apiRoutes.put('/tags/:storyId', (req, res) => {
                 tags = JSON.parse(str);
                 return resolve();
               } catch(e) {
-                res.status(500).send('bad tags JSON');
+                reject(e);
               }
             })
         } else {
@@ -127,10 +131,32 @@ apiRoutes.put('/tags/:storyId', (req, res) => {
         
     })
     .then(() => {
-      tags[storyId] = storyTags;
+      if (overrideExistingTags) {
+        tags[storyId] = storyTags;
+      } else {
+        // merge new tags with old tags
+        tags[storyId] = [
+        ...(tags[storyId] || []), 
+        ...storyTags.filter(t => !(tags[storyId] || []).includes(t))
+        ];
+      }
       return writeFile(tagsPath, JSON.stringify(tags), 'utf8')
     })
-    .then(() => {
+    .then(() => resolve(tags))
+    .catch(reject)
+  })
+}
+
+/**
+ * Update tags list for a specific story
+ */
+apiRoutes.put('/tags/:storyId', (req, res) => {
+  // let tags;
+  const {body = {}} = req;
+  const {tags: storyTags = []} = body;
+  const {storyId} = req.params;
+  updateStoryTags({storyTags, storyId})
+    .then((tags) => {
       res.json(tags);
     })
     .catch(error => {
@@ -171,7 +197,10 @@ apiRoutes.use('/instance/:instanceId/story/:storyId', (req, res) => {
  * Get list of instances
  */
 apiRoutes.get('', (req, res) => {
-  res.json(index)
+  readIndex()
+    .then(index => {
+      res.json(index);
+    })
 });
 
 /**
@@ -252,6 +281,7 @@ apiRoutes.post('/operation', (req, res) => {
                       .filter(story => stories.find(
                         oStory => oStory.id === story.id
                       ) === undefined);
+
                     return {
                       ...instance,
                       lastFetchAt: new Date().getTime(),
@@ -262,6 +292,9 @@ apiRoutes.post('/operation', (req, res) => {
                 });
                 return writeFile(`${dataBasePath}/index.json`, JSON.stringify(instances), 'utf8')
               })
+              /**
+               * Return instances
+               */
               .then(() => {
                 res.json({instances, stories});                
               });
@@ -287,11 +320,28 @@ apiRoutes.post('/operation', (req, res) => {
                 return writeFile(`${dataPath}/instances/${instance.slug}/${operation.payload.storyId}/${operation.payload.storyId}.html`, storyHTML, 'utf8')
               })
               /**
-               * Return JSON
+               * Auto-tag with instance metadata (to allow for more fine-grained metadata)
                */
               .then(() => {
+                const instanceMetaFields = ['teacher', 'courseName', 'campus', 'year', 'semester'].reduce((res, key) => {
+                  return [
+                  ...res,
+                  `metadata:${key}:${instance[key]}`
+                  ]
+                }, []);
+
+                return updateStoryTags({
+                  storyId: operation.payload.storyId,
+                  storyTags: instanceMetaFields,
+                  overrideExistingTags: false
+                })
+              })
+              /**
+               * Return JSON
+               */
+              .then((tags) => {
                 console.log('done archiving story');
-                res.json({instances, story});                
+                res.json({instances, story, tags});                
               });
             break;
           default:

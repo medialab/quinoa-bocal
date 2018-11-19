@@ -6,6 +6,7 @@ import {
   StretchedLayoutItem,
   Column,
   Tag,
+  Level,
   Delete,
 } from 'quinoa-design-library/components';
 
@@ -95,6 +96,7 @@ export default class TagsManager extends Component {
         <p>
           Vous éditez les étiquettes pour le récit "{title || 'inconnu'}"
         </p>
+        <Level/>
 
         <StretchedLayoutContainer isDirection="horizontal">
           <StretchedLayoutItem isFlex="1">
@@ -110,7 +112,7 @@ export default class TagsManager extends Component {
                     })
                   }
                   return (
-                    <Tag isColor="black" key={tagIndex}>
+                    <Tag isColor={tag.indexOf('metadata') === 0 ? 'success': 'black'} key={tagIndex}>
                       {tag}
                       <Delete onClick={handleDelete} />
                     </Tag>
@@ -146,7 +148,7 @@ export default class TagsManager extends Component {
                     })
                   }
                   return (
-                    <Tag style={{cursor: 'pointer'}} isColor="light" key={tagIndex} onClick={handleClick}>
+                    <Tag style={{cursor: 'pointer'}} isColor={otherTag.name.indexOf('metadata') === 0 ? 'warning': 'light'} key={tagIndex} onClick={handleClick}>
                       {otherTag.name} ({otherTag.count})
                     </Tag>
                   )

@@ -3,6 +3,10 @@ import trunc from 'unicode-byte-truncate';
 import {Helmet} from "react-helmet";
 import Tooltip from 'react-tooltip';
 import { injectMessageManager } from 'react-message-manager';
+import {
+  uniq,
+  partition
+} from 'lodash';
 
 import {
   getAllInstances, 
@@ -56,6 +60,7 @@ const FILTER_KEYS = {
   'courseName': 'nom du cours', 
   // 'instanceSlug' : 'nom de l\'instance', 
   'teacher' : 'enseignant', 
+  'tags': 'étiquettes'
 };
 
 const INSTANCES_TABLE_COLUMNS = [
@@ -73,6 +78,63 @@ const abbrev = (str = '', maxLength = 10) => {
   }
   return str;
 };
+
+
+const resolveMetadata = ({instance, story, tags = {}}) => {
+  const fields = ['campus', 'courseName', 'semester', 'teacher', 'year'];
+
+  // get metadata base based on instance-level metadata
+  const instanceMetadata = fields.reduce((res, fieldKey) => {
+    return {
+      ...res,
+      [fieldKey]: instance[fieldKey]
+    }
+  }, {});
+  
+  const initialTags = tags[story.id] || [];
+  const tagsGroups = partition(initialTags, t => t.indexOf('metadata:') === 0);
+
+  let tagsMetadata = {};
+  if (tagsGroups[0].length) {
+    tagsMetadata = tagsGroups[0]
+    .map(t => t.split(':'))
+    .filter(t => t.length === 3)
+    .reduce((res, t) => {
+      const key = t[1];
+      const newValue = t[2];
+      const oldValue = res[key] || [];
+      return {
+        ...res,
+        [key]: uniq([...oldValue, newValue])
+      }
+    }, {});
+  }
+    
+
+  const finalMetadata = fields.reduce((res, fieldKey) => {
+    const tagsValue = tagsMetadata[fieldKey] || [];
+    if (tagsValue.length) {
+      return {
+        ...res,
+        [fieldKey]: tagsValue
+      }
+    } else return {
+      ...res,
+      [fieldKey]: [instanceMetadata[fieldKey]]
+    }
+  }, {})
+
+  const storyTags = tagsGroups[1];
+
+  const metadata = {
+    ...finalMetadata,
+    slug: instance.slug,
+    storyTags
+  };
+  
+  return metadata;
+  // {campus, courseName, semester, slug, teacher, year, storyTags}
+}
 
 
 class App extends Component {
@@ -207,12 +269,15 @@ class App extends Component {
       const firstOperation = operations[0];
       setTimeout(() => {
         this.processOperation(firstOperation)
-          .then(({instances, newOperations}) => {
+          .then(({instances, newOperations, tags}) => {
             if (instances) {
               this.setState({
                 instances,
                 editedInstances: instances
               })
+            }
+            if (tags) {
+              this.setState({tags});
             }
             let updatedOperations = operations.slice(1);
             if (newOperations && newOperations.length) {
@@ -281,21 +346,27 @@ class App extends Component {
       cancelOperation,
     } = this;
     const stories = instances.reduce((res, instance) => {
-      const {campus, courseName, semester, slug, teacher, year} = instance;
+
       return [
           ...res,
-          ...(instance.stories || []).map(story => ({
-            ...story,
-            metadata: {
-              ...story.metadata,
-              campus, 
-              courseName, 
-              semester, 
-              instanceSlug: slug, 
-              teacher, 
-              year,
+          ...(instance.stories || []).map(story => {
+            const {
+              campus, courseName, semester, slug, teacher, year, storyTags
+            } = resolveMetadata({instance, story, tags});
+            return {
+              ...story,
+              metadata: {
+                ...story.metadata,
+                campus, 
+                courseName, 
+                semester, 
+                instanceSlug: slug, 
+                teacher, 
+                year,
+                tags: storyTags
+              }
             }
-          }))
+          })
       ]
     }, []);
 
@@ -305,7 +376,8 @@ class App extends Component {
       if (filterValues.length) {
         newFilteredStories = filteredStories.filter(story => {
           const val = story.metadata[filterKey];
-          return filterValues.includes(val + '');
+          // return filterValues.includes(val + '');
+          return filterValues.filter(fVal => val.includes(fVal)).length;
         })
       }
       return newFilteredStories;
@@ -322,19 +394,25 @@ class App extends Component {
       ...result,
       [filterKey]: stories.reduce((result2, story) => {
         let newCount;
-        const existingCount = result2[story.metadata[filterKey]] && result2[story.metadata[filterKey]].count;
-        if (visibleStories.find(s => s.id === story.id)) {
-          newCount = existingCount ? existingCount + 1 : 1;
-        } else {
-          newCount = existingCount || 0;
-        }
 
-        return {
-          ...result2,
-          [story.metadata[filterKey]]: {
-            count: newCount
+        const storyValues = story.metadata[filterKey];        
+
+        return storyValues.reduce((result3, value) => {
+          
+          const existingCount = result2[value] && result2[value].count;
+          if (visibleStories.find(s => s.id === story.id)) {
+            newCount = existingCount ? existingCount + 1 : 1;
+          } else {
+            newCount = existingCount || 0;
           }
-        }
+
+          return {
+            ...result3,
+            [value]: {
+              count: newCount
+            }
+          }
+        }, result2)
       }, {})
     }), {});
 
@@ -469,6 +547,7 @@ class App extends Component {
                       this.setActiveStory({instanceId: story.metadata.instanceSlug, storyId: story.id})
                     }
                     const isActive = activeStory && story.id === activeStory.id;
+                    const tagsCount = (tags[story.id] || []).filter(t => t.indexOf('metadata') !== 0).length;
                     return (
                       <Level
                         key={story.id}
@@ -476,6 +555,7 @@ class App extends Component {
                         <Column style={{paddingTop: 0, paddingBottom: 0}}>
                           <StoryCard
                             story={story}
+                            tagsCount={tagsCount}
                             isActive={isActive}
                             onAction={handleAction}
                             onClick={handleClick}

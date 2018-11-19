@@ -24,6 +24,7 @@ const InlineIcon = ({
 
 const StoryCard = ({
   story,
+  tagsCount,
   onAction,
   isActive,
   onClick,
@@ -38,7 +39,7 @@ const StoryCard = ({
     id: 'preview',
   },
   {
-    label: <span><InlineIcon icon="tags" />{translate('étiquettes')}</span>,
+    label: <span><InlineIcon icon="tags" />{translate('étiquettes')} ({tagsCount})</span>,
     id: 'tags',
   },
   {
