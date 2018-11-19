@@ -1,5 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
 // import ReactTooltip from 'react-tooltip';
 import trunc from 'unicode-byte-truncate';
@@ -19,7 +20,7 @@ const abbrevString = (str = '', maxLength = 20) => {
 
 const InlineIcon = ({
   icon
-}) => <Icon style={{marginLeft: '.5rem', marginRight: '1rem'}} icon={icon} />;
+}) => <FontAwesomeIcon icon={icon} /> // <Icon style={{marginLeft: '.5rem', marginRight: '1rem'}} icon={icon} />;
 
 const StoryCard = ({
   story,
@@ -32,12 +33,12 @@ const StoryCard = ({
 
   const actions = [
   {
-    label: <span><InlineIcon icon="pencil" /> {translate('aperçu')}</span>,
+    label: <span><InlineIcon icon="pencil-alt" /> {translate('aperçu')}</span>,
     isColor: 'primary',
     id: 'preview',
   },
   {
-    label: <span><InlineIcon icon="eye" />{translate('étiquettes')}</span>,
+    label: <span><InlineIcon icon="tags" />{translate('étiquettes')}</span>,
     id: 'tags',
   },
   {

@@ -74,6 +74,7 @@
   border-left: 1px solid white;
   box-sizing: content-box;
   min-height: 2rem;
+  font-size: .8rem;
 }
 
 .elastic-list-column .values{

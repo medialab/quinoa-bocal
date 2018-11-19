@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import { debounce } from 'lodash';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
 const DEFAULT_DEBOUNCE = 200;
 
@@ -72,7 +73,7 @@ export default class SearchInput extends Component {
                 } }
           className={ 'icon' }
         >
-          <i className={ 'fas fa-search' } />
+          <FontAwesomeIcon icon="search" />
         </span>
       </form>
     );

@@ -32,7 +32,22 @@ import {
 
 import './App.css';
 import 'quinoa-design-library/themes/millet/style.css';
-import 'font-awesome/css/font-awesome.css';
+// import 'font-awesome/css/font-awesome.css';
+import { library } from '@fortawesome/fontawesome-svg-core'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import {
+  faSearch, 
+  faTags,
+  faPencilAlt,
+  faEye,
+  faCopy
+} from '@fortawesome/free-solid-svg-icons'
+
+library.add(faSearch)
+library.add(faTags)
+library.add(faPencilAlt)
+library.add(faEye)
+library.add(faCopy)
 
 const FILTER_KEYS = {
   'year': 'année',
