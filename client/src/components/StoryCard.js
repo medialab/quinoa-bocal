@@ -2,20 +2,15 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
-// import ReactTooltip from 'react-tooltip';
-import trunc from 'unicode-byte-truncate';
 
-const abbrevString = (str = '', maxLength = 20) => {
-  if (str.length > maxLength) {
-    return `${trunc(str, maxLength)}...`;
-  }
-  return str;
-}
+import {abbrev as abbrevString} from '../helpers/misc';
 
 
 const InlineIcon = ({
   icon
-}) => <FontAwesomeIcon icon={icon} /> // <Icon style={{marginLeft: '.5rem', marginRight: '1rem'}} icon={icon} />;
+}) => (
+  <FontAwesomeIcon icon={icon} />
+);
 
 const StoryCard = ({
   story,

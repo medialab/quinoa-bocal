@@ -45,9 +45,11 @@ const DownloadModal = ({
           </div>
           <Level/>
           <div>
-            <h3 className="title is-5">
-              Télécharger les données d'une instance particulière
-            </h3>
+            {instances.length > 0 &&
+              <h3 className="title is-5">
+                Télécharger les données d'une instance particulière
+              </h3>
+            }
             <table className="table flexed">
               <tbody>
               {
@@ -80,9 +82,11 @@ const DownloadModal = ({
           </div>
           <Level/>
           <div>
-            <h3 className="title is-5">
-              Télécharger les récits attachés à une étiquette
-            </h3>
+            {tags.length> 0 &&
+              <h3 className="title is-5">
+                Télécharger les récits attachés à une étiquette
+              </h3>
+            }
             <table className="table flexed">
               <tbody>
               {

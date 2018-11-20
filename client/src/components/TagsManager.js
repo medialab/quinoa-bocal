@@ -76,7 +76,6 @@ export default class TagsManager extends Component {
     }, []);
     const otherTags = allTags.filter(tag => !tags.includes(tag.name));
 
-
     const story = stories[storyId] || {};
     const {title} = story;
 

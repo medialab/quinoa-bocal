@@ -1,13 +1,33 @@
 import React, { Component } from 'react';
-import trunc from 'unicode-byte-truncate';
 import {Helmet} from "react-helmet";
 import Tooltip from 'react-tooltip';
 import { injectMessageManager } from 'react-message-manager';
 import {csvFormat} from 'd3-dsv';
 import {
   uniq,
-  partition
 } from 'lodash';
+
+import {
+  Button,
+  StretchedLayoutContainer,
+  StretchedLayoutItem,
+  Level,
+  Column,
+  ModalCard,
+} from 'quinoa-design-library/components';
+
+import { library as fontAwesomeLibrary } from '@fortawesome/fontawesome-svg-core'
+import {
+  faSearch, 
+  faTags,
+  faPencilAlt,
+  faEye,
+  faCopy
+} from '@fortawesome/free-solid-svg-icons'
+
+import 'quinoa-design-library/themes/millet/style.css';
+import './App.css';
+
 
 import {
   getAllInstances, 
@@ -20,6 +40,12 @@ import {
 } from './helpers/client';
 
 import download from './helpers/downloadFile';
+import {
+  abbrev,
+  formatInstanceForCsv,
+  formatStoryForCsv,
+  resolveMetadata,
+} from './helpers/misc';
 
 import PreviewWrapper from './components/PreviewWrapper';
 import SearchInput from './components/SearchInput';
@@ -30,32 +56,11 @@ import UpdateModal from './components/UpdateModal';
 import DownloadModal from './components/DownloadModal';
 import TagsManager from './components/TagsManager';
 
-import {
-  Button,
-  StretchedLayoutContainer,
-  StretchedLayoutItem,
-  Level,
-  Column,
-  ModalCard,
-} from 'quinoa-design-library/components';
-
-import './App.css';
-import 'quinoa-design-library/themes/millet/style.css';
-// import 'font-awesome/css/font-awesome.css';
-import { library } from '@fortawesome/fontawesome-svg-core'
-import {
-  faSearch, 
-  faTags,
-  faPencilAlt,
-  faEye,
-  faCopy
-} from '@fortawesome/free-solid-svg-icons'
-
-library.add(faSearch)
-library.add(faTags)
-library.add(faPencilAlt)
-library.add(faEye)
-library.add(faCopy)
+fontAwesomeLibrary.add(faSearch)
+fontAwesomeLibrary.add(faTags)
+fontAwesomeLibrary.add(faPencilAlt)
+fontAwesomeLibrary.add(faEye)
+fontAwesomeLibrary.add(faCopy)
 
 const FILTER_KEYS = {
   'year': 'année',
@@ -75,108 +80,6 @@ const INSTANCES_TABLE_COLUMNS = [
   {key: 'courseName'  , label: 'Nom du cours'},
   {key: 'teacher' , label: 'Enseignant.e'},
 ];
-
-const formatInstanceForCsv = i => ({
-  'campus': i.campus,
-  'cours': i.courseName,
-  url: i.instanceUrl,
-  'semestre': i.semester,
-  'enseignant.e': i.teacher,
-  'année': i.year,
-  'nombre de récits': i.stories.length,
-  'dernière récupération': new Date(+i.lastFetchAt).toLocaleString(),
-  'dernière récupération (ISO)': new Date(+i.lastFetchAt).toISOString(),
-})
-
-
-const formatStoryForCsv = story => {
-  const {metadata} = story;
-  const csvMetadata = {
-    titre: metadata.title,
-    'sous-titre': metadata.subtitle,
-    auteurs: metadata.authors.sort().join(),
-    'année': metadata.year,
-    semestre: metadata.semester.join(),
-    campus: metadata.campus.sort().join(),
-    cours: metadata.courseName.sort().join(),
-    instance: metadata.instanceSlug,
-    'étiquettes': metadata.tags.sort().join(),
-    'résumé': metadata.abstract,
-    'dernière récupération': new Date(metadata.lastFetchAt).toLocaleString(),
-    'dernière récupération (ISO)': new Date(metadata.lastFetchAt).toISOString(),
-  };
-
-  return {
-    ...csvMetadata,
-    'dernière modification': new Date(story.lastUpdateAt).toLocaleString(),
-    'dernière modification (ISO)': new Date(story.lastUpdateAt).toISOString()
-  };
-}
-
-
-const abbrev = (str = '', maxLength = 10) => {
-  if (str.length > maxLength) {
-   return trunc(str, maxLength) + '...';
-  }
-  return str;
-};
-
-
-const resolveMetadata = ({instance, story, tags = {}}) => {
-  const fields = ['campus', 'courseName', 'semester', 'teacher', 'year'];
-
-  // get metadata base based on instance-level metadata
-  const instanceMetadata = fields.reduce((res, fieldKey) => {
-    return {
-      ...res,
-      [fieldKey]: instance[fieldKey]
-    }
-  }, {});
-  
-  const initialTags = tags[story.id] || [];
-  const tagsGroups = partition(initialTags, t => t.indexOf('metadata:') === 0);
-
-  let tagsMetadata = {};
-  if (tagsGroups[0].length) {
-    tagsMetadata = tagsGroups[0]
-    .map(t => t.split(':'))
-    .filter(t => t.length === 3)
-    .reduce((res, t) => {
-      const key = t[1];
-      const newValue = t[2];
-      const oldValue = res[key] || [];
-      return {
-        ...res,
-        [key]: uniq([...oldValue, newValue])
-      }
-    }, {});
-  }
-    
-
-  const finalMetadata = fields.reduce((res, fieldKey) => {
-    const tagsValue = tagsMetadata[fieldKey] || [];
-    if (tagsValue.length) {
-      return {
-        ...res,
-        [fieldKey]: tagsValue
-      }
-    } else return {
-      ...res,
-      [fieldKey]: [instanceMetadata[fieldKey]]
-    }
-  }, {})
-
-  const storyTags = tagsGroups[1];
-
-  const metadata = {
-    ...finalMetadata,
-    slug: instance.slug,
-    storyTags
-  };
-  
-  return metadata;
-  // {campus, courseName, semester, slug, teacher, year, storyTags}
-}
 
 
 class App extends Component {
@@ -200,7 +103,6 @@ class App extends Component {
         [key]: []
       }), {})
     }
-
     this.passwordInput = React.createRef();
   }
 
@@ -251,17 +153,17 @@ class App extends Component {
 
   setActiveStory = ({instanceId, storyId}) => {
     getStoryData({storyId, instanceId}, this.state.password)
-          .then(story => {
-            this.setState({
-              activeStory: {
-                ...story,
-                metadata: {
-                  ...story.metadata,
-                  instanceSlug: instanceId
-                }
-              }
-            })
-          })
+      .then(story => {
+        this.setState({
+          activeStory: {
+            ...story,
+            metadata: {
+              ...story.metadata,
+              instanceSlug: instanceId
+            }
+          }
+        })
+      })
   }
 
   handleSearchTermChange = newSearchTerm => {
@@ -270,10 +172,14 @@ class App extends Component {
     })
   }
 
+  /**
+   * process an operation and behave accordingly
+   */
   processOperation = (operation) => {
     const {type, payload} = operation;
     return new Promise((resolve, reject) => {
       switch(type) {
+        // case : list stories for a given instance
         case 'discover-instance':
           requestOperation({operation}, this.state.password)
             .then(({instances, stories = [], tags}) => {
@@ -288,6 +194,7 @@ class App extends Component {
               resolve({instances, newOperations, tags})
             })
           break;
+        // case : ask for download of the json and html of a story
         case 'archive-story':
           requestOperation({operation}, this.state.password)
             .then(({instances, tags}) => {
@@ -302,8 +209,12 @@ class App extends Component {
       
   }
 
+  /**
+   * Unstack the queue of operations to ask to the server
+   */
   processOperationList = () => {
     const {operations = []} = this.state;
+    // if operation queue is not empty
     if (operations.length) {
       this.setState({
         operationsStatus: 'processing'
@@ -345,16 +256,25 @@ class App extends Component {
     }
   }
 
-  addOperation = operation => {
+  /**
+   * Add an operation to the queue of operations to ask to the server
+   * and run the operations list
+   */
+  addOperation = (operation, refresh = true) => {
     this.setState({
       operations: [
         ...this.state.operations,
         operation
       ]
     });
-    setTimeout(() => this.processOperationList());
+    if (refresh) {
+      setTimeout(() => this.processOperationList());
+    }
   }
 
+  /**
+   * Cancel an operation in the queue of operations to ask to the server
+   */
   cancelOperation = operationIndex => {
     this.setState({
       operations: this.state.operations.filter((o, i) => i !== operationIndex)
@@ -489,9 +409,8 @@ class App extends Component {
 
     const enrichInstances = instances => instances.map(instance => ({
       ...instance,
-      slug: instance.instanceUrl.replace(/\/$/, '').replace(/https?:\/\//, '').replace(/\W/g, '_') // instance.instanceUrl.split('/').filter(p => p.trim().length).pop()
-    }))
-     
+      slug: instance.instanceUrl.replace(/\/$/, '').replace(/https?:\/\//, '').replace(/\W/g, '_')
+    }));
 
     const handleUpdateInstancesListRequest = () => {
       messageManager.showSuccessMessage('Demande de mise à jour...');
@@ -648,7 +567,7 @@ class App extends Component {
                 }
               </StretchedLayoutItem>
               <StretchedLayoutItem>
-                <StretchedLayoutContainer style={{padding: '1rem'}} isDirection={'horizontal'}>
+                <StretchedLayoutContainer style={{padding: '1rem', alignItems: 'center'}} isDirection={'horizontal'}>
                   <StretchedLayoutItem isFlex={1}>
                     <SearchInput value={searchTerm} onUpdate={handleSearchTermChange} placeholder={'chercher un récit'} />
                   </StretchedLayoutItem>
