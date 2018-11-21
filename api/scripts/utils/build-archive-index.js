@@ -18,12 +18,11 @@ const buildInstanceHeader = instance => `
       cours : ${instance.courseName}
     </li>
   </ul>
-`;
+`
 
-
-const buildInstanceArchive = ({index, tags, instanceSlug}) => {
-  const instance = index.find(i => i.slug === instanceSlug);
-    return `
+const buildInstanceArchive = ({ index, tags, instanceSlug }) => {
+  const instance = index.find(i => i.slug === instanceSlug)
+  return `
 <div className="instance-container">
   <div className="instance-header">
     ${buildInstanceHeader(instance)}
@@ -33,29 +32,29 @@ const buildInstanceArchive = ({index, tags, instanceSlug}) => {
   </p>
   <ul>
     ${
-      instance.stories.map(story => {
-        return `
+  instance.stories.map(story => {
+    return `
         <li>
           <a href="stories/${story.id}/${story.id}.html">${story.metadata.title}${story.metadata.subtitle ? ' - ' + story.metadata.subtitle : ''}</a> - par ${story.metadata.authors.join()}
         </li>
         `
-      })
-    }
+  })
+}
   </ul>
 </div>
-`;
+`
 }
 
-const buildTagArchive = ({index, tags, tag}) => {
+const buildTagArchive = ({ index, tags, tag }) => {
   const stories = index.reduce((result, instance) => {
     const relevantStories = instance.stories.filter(story => {
-      const storyId = story.id;
-      const storyTags = tags[storyId];
+      const storyId = story.id
+      const storyTags = tags[storyId]
       if (storyTags) {
         return storyTags.includes(tag)
       }
     })
-    .map(s => Object.assign(s, {instanceSlug: instance.slug}));
+      .map(s => Object.assign(s, { instanceSlug: instance.slug }))
 
     return [...result, ...relevantStories]
   }, [])
@@ -63,20 +62,20 @@ const buildTagArchive = ({index, tags, tag}) => {
     return `
 <ul>
   ${
-    stories.map(story => {
-      return `
+  stories.map(story => {
+    return `
       <li>
         <a href="stories/${story.id}/${story.id}.html">${story.metadata.title}${story.metadata.subtitle ? ' - ' + story.metadata.subtitle : ''}</a> - par ${story.metadata.authors.join()} (instance "${story.instanceSlug}")
       </li>
       `
-    })
-  }
+  })
+}
 </ul>
 `
   })
 }
 
-const buildWholeArchive = ({index, tags}) => {
+const buildWholeArchive = ({ index, tags }) => {
   return index.map(instance => {
     return `
 <div className="instance-container">
@@ -88,14 +87,14 @@ const buildWholeArchive = ({index, tags}) => {
   </p>
   <ul>
     ${
-      instance.stories.map(story => {
-        return `
+  instance.stories.map(story => {
+    return `
         <li>
           <a href="archive/instances/${instance.slug}/${story.id}/${story.id}.html">${story.metadata.title}${story.metadata.subtitle ? ' - ' + story.metadata.subtitle : ''}</a> - par ${story.metadata.authors.join()}
         </li>
         `
-      })
-    }
+  })
+}
   </ul>
 </div>
 `
@@ -105,25 +104,24 @@ const buildWholeArchive = ({index, tags}) => {
 const buildArchiveIndex = ({
   filter,
   index,
-  tags,
+  tags
 }) => {
-
-  let main;
+  let main
   if (!filter) {
-    main = buildWholeArchive({index, tags})
+    main = buildWholeArchive({ index, tags })
   } else if (filter.type === 'instance') {
-    main = buildInstanceArchive({index, tags, instanceSlug: filter.payload.instanceSlug})
+    main = buildInstanceArchive({ index, tags, instanceSlug: filter.payload.instanceSlug })
   } else if (filter.type === 'tag') {
-    main = buildTagArchive({index, tags, tag: filter.payload.tag})
+    main = buildTagArchive({ index, tags, tag: filter.payload.tag })
   }
 
-  let title = '';
+  let title = ''
   if (!filter) {
-    title = `Archive complète, récupérée le ${new Date().toLocaleString()}`;
+    title = `Archive complète, récupérée le ${new Date().toLocaleString()}`
   } else if (filter.type === 'instance') {
-    title = `Archive de l'instance ${filter.payload.instanceSlug}, récupérée le ${new Date().toLocaleString()}`;
+    title = `Archive de l'instance ${filter.payload.instanceSlug}, récupérée le ${new Date().toLocaleString()}`
   } else if (filter.type === 'tag') {
-    title = `Archive des récits pour l'étiquette ${filter.payload.tag}, récupérée le ${new Date().toLocaleString()}`;
+    title = `Archive des récits pour l'étiquette ${filter.payload.tag}, récupérée le ${new Date().toLocaleString()}`
   }
 
   return `
@@ -144,4 +142,4 @@ const buildArchiveIndex = ({
 `
 }
 
-module.exports = buildArchiveIndex;
+module.exports = buildArchiveIndex

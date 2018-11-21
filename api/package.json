@@ -6,7 +6,9 @@
   "scripts": {
     "build-index": "node scripts/build-data",
     "start": "node server",
-    "dev": "nodemon server"
+    "dev": "nodemon server",
+    "lint": "eslint server.js scripts",
+    "lint:fix": "eslint --fix server.js scripts"
   },
   "nodemonConfig": {
     "ignore": [
@@ -15,7 +17,7 @@
     ],
     "delay": "500"
   },
-  "author": "",
+  "author": "medialab",
   "license": "ISC",
   "dependencies": {
     "ajv": "^6.5.4",
@@ -31,6 +33,12 @@
     "uuid": "^3.3.2"
   },
   "devDependencies": {
+    "eslint": "^5.9.0",
+    "eslint-config-standard": "^12.0.0",
+    "eslint-plugin-import": "^2.14.0",
+    "eslint-plugin-node": "^8.0.0",
+    "eslint-plugin-promise": "^4.0.1",
+    "eslint-plugin-standard": "^4.0.0",
     "nodemon": "^1.18.5"
   }
 }
