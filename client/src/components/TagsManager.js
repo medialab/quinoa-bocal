@@ -103,7 +103,14 @@ export default class TagsManager extends Component {
             <div>
               <Column>
               {
-                tags.map((tag, tagIndex) => {
+                tags
+                .sort((a, b) => {
+                  if (a > b) {
+                    return 1;
+                  }
+                  return -1;
+                })
+                .map((tag, tagIndex) => {
                   const handleDelete = () => {
                     const newtags = tags.filter((t, i) => i !== tagIndex);
                     this.setState({
@@ -139,7 +146,14 @@ export default class TagsManager extends Component {
             <h3 className="title is-5">Autres étiquettes utilisées</h3>
             <div>
               {
-                otherTags.map((otherTag, tagIndex) => {
+                otherTags
+                .sort((a, b) => {
+                  if (a.name > b.name) {
+                    return 1;
+                  }
+                  return -1;
+                })
+                .map((otherTag, tagIndex) => {
                   const handleClick = () => {
                     const newTags = [...this.state.tags, otherTag.name];
                     this.setState({
@@ -159,7 +173,7 @@ export default class TagsManager extends Component {
 
         <StretchedLayoutContainer isDirection="horizontal">
           <StretchedLayoutItem isFlex={1}>
-            <Button onClick={handleSubmit} isColor="info">
+            <Button isFullWidth onClick={handleSubmit} isColor="info">
               Sauvegarder
             </Button>
           </StretchedLayoutItem>
