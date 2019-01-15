@@ -205,7 +205,8 @@ class App extends Component {
                     operation,
                   }
                 ]
-              })
+              });
+              reject(e);
             })
           break;
         // case : ask for download of the json and html of a story
@@ -225,7 +226,9 @@ class App extends Component {
                     operation
                   }
                 ]
-              })
+              });
+              reject(e);
+              
             })
           break;
         default:
@@ -276,6 +279,13 @@ class App extends Component {
             }
           })
           .catch(error => {
+            console.error('an error occured', error);
+            let updatedOperations = operations.slice(1);
+            this.setState({
+                operations: updatedOperations
+              });
+              setTimeout(() => this.processOperationList());
+
             this.props.messageManager.showErrorMessage('Oh non ! il y a eu une erreur: ' + error);
           })
       })
