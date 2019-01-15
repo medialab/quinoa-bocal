@@ -9,7 +9,9 @@ import {
   Tab,
   TabLink,
   Button,
+  Notification,
 } from 'quinoa-design-library/components';
+import download from '../helpers/downloadFile';
 
 const OperationCard = ({operation, allowCancel=false, active, onCancel}) => {
   let header;
@@ -174,7 +176,13 @@ const UpdateModal = ({
   addOperation,
   cancelOperation,
   operationsStatus,
+  operationalErrors = [],
 }) => {
+
+  const downloadErrorsAsJSON = () => {
+    const serialized = JSON.stringify(operations, null, 2);
+    download(data, 'json', 'erreurs')
+  }
   return (
     <ModalCard
       isActive={updateViewVisible}
@@ -274,6 +282,22 @@ const UpdateModal = ({
                     }
                   </tbody>
                 </table>
+                {
+                  operationalErrors.length > 0 ?
+                    <div>
+                      {
+                        operationalErrors.map((item, messageIndex) => (
+                          <Notification key={messageIndex} isColor="warning">
+                            {item.message}
+                          </Notification>
+                        ))
+                      }
+                      <Button onClick={downloadErrorsAsJSON}>
+                        Télécharger les détails de ces erreurs
+                      </Button>
+                    </div>
+                  : null
+                }
                 {operationsStatus === 'processing' && operations.length &&
                   <Column>
                     <h3 className="title is-3">

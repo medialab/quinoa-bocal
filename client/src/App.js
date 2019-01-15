@@ -96,6 +96,7 @@ class App extends Component {
       moreInfoStoryId: undefined,
       tagModalStoryId: undefined,
       activeStory: undefined,
+      operationalErrors: [],
       updateViewVisible: false,
       updateViewMode: 'instances',
       activeFilters: Object.keys(FILTER_KEYS).reduce((res, key) => ({
@@ -193,12 +194,38 @@ class App extends Component {
               }));
               resolve({instances, newOperations, tags})
             })
+            .catch(e => {
+              const message = `Impossible de récupérer les récits de l\'instance ${payload.instanceUrl}`;
+              this.props.messageManager.showErrorMessage(message);
+              this.setState({
+                operationalErrors: [
+                  ...this.state.operationalErrors,
+                  {
+                    message,
+                    operation
+                  }
+                ]
+              })
+            })
           break;
         // case : ask for download of the json and html of a story
         case 'archive-story':
           requestOperation({operation}, this.state.password)
             .then(({instances, tags}) => {
               resolve({instances, newOperations: [], tags})
+            })
+            .catch(e => {
+              const message = `Impossible de récupérer le récit de ${payload.storyTitle} (instance: ${payload.instanceUrl} - id: ${payload.storyId})`;
+              this.props.messageManager.showErrorMessage(message);
+              this.setState({
+                operationalErrors: [
+                  ...this.state.operationalErrors,
+                  {
+                    message,
+                    operation
+                  }
+                ]
+              })
             })
           break;
         default:
@@ -298,6 +325,7 @@ class App extends Component {
       operations,
       operationsStatus,
       downloadOptionsVisible,
+      operationalErrors= [],
     } = this.state;
     const {
       messageManager,
@@ -516,7 +544,7 @@ class App extends Component {
                   <h2 className="title is-5">Administration des archives quinoa</h2>
                 </header>
               </StretchedLayoutItem>
-              <StretchedLayoutItem isFlex={1}>
+              <StretchedLayoutItem style={{maxHeight: '30vh'}} isFlex={1}>
                 <ElasticList
                   filterValues={filterValues}
                   filterKeys={FILTER_KEYS}
@@ -667,6 +695,7 @@ class App extends Component {
             operations={operations}
             addOperation={addOperation}
             cancelOperation={cancelOperation}
+            operationalErrors={operationalErrors}
             operationsStatus={operationsStatus}
             onSetVisible={visible => {
               this.setState({
