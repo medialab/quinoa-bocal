@@ -23,6 +23,8 @@ const archiveStory = (instanceUrl, storyId, format = 'json') => {
         resolve(data)
       })
       .catch(error => {
+        console.log('archive error');
+        console.log('rejecting archive promise');
         reject(error)
       })
   })

@@ -10,7 +10,8 @@ const config = require('config')
 const archiver = require('archiver')
 const { v4: genId } = require('uuid')
 const { csvFormat } = require('d3-dsv')
-const serverPassword = config.password
+const serverPassword = config.password;
+
 const {
   readFile,
   writeFile,
@@ -382,7 +383,8 @@ const updateStoryTagsHandler = (req, res) => {
 
 const operationHandler = (req, res) => {
   const { body = {} } = req
-  const { operation } = body
+  const { operation } = body;
+  console.log('handle operation', operation.type, operation);
   if (operation) {
     let instances
     readFile(`${dataBasePath}/index.json`, 'utf8')
@@ -435,7 +437,18 @@ const operationHandler = (req, res) => {
               /**
                * Save as JSON
                */
-              .then(() => archiveStory(operation.payload.instanceUrl, operation.payload.storyId, 'json'))
+              // .then(() => archiveStory(operation.payload.instanceUrl, operation.payload.storyId, 'json'))
+              .then(() => {
+                return new Promise((res, rej) => {
+
+                  archiveStory(operation.payload.instanceUrl, operation.payload.storyId, 'json')
+                    .then(storyHSON => res(storyHSON))
+                    .catch(e => {
+                      console.log('catched archive error');
+                      rej(e);
+                    })
+                })
+              })
               .then(storyJSON => {
                 story = storyJSON
                 return writeFile(`${dataPath}/instances/${instance.slug}/${operation.payload.storyId}/${operation.payload.storyId}.json`, JSON.stringify(story), 'utf8')
@@ -443,7 +456,17 @@ const operationHandler = (req, res) => {
               /**
                * Save as HTML
                */
-              .then(() => archiveStory(operation.payload.instanceUrl, operation.payload.storyId, 'html'))
+              .then(() => {
+                return new Promise((res, rej) => {
+
+                  archiveStory(operation.payload.instanceUrl, operation.payload.storyId, 'html')
+                    .then(storyHTML => res(storyHTML))
+                    .catch(e => {
+                      console.log('catched archive error');
+                      rej(e);
+                    })
+                })
+              })
               .then(storyHTML => {
                 return writeFile(`${dataPath}/instances/${instance.slug}/${operation.payload.storyId}/${operation.payload.storyId}.html`, storyHTML, 'utf8')
               })
@@ -468,7 +491,12 @@ const operationHandler = (req, res) => {
                * Return JSON
                */
               .then((tags) => {
-                res.json({ instances, story, tags })
+                console.log('done');
+                res.json({ instances, story, tags });
+              })
+              .catch(e => {
+                console.error('an error occured', e)
+                res.status(500).send('error')
               })
             break
           default:
