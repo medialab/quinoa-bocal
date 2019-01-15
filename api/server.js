@@ -22,7 +22,7 @@ const {
   exists
 } = require('fs-extra')
 
-const { dataPath, PORT = 3001, tempPath } = require('config')
+const { dataPath, PORT = 3003, tempPath } = require('config')
 const dataBasePath = path.resolve(__dirname, dataPath)
 const tempBasePath = path.resolve(__dirname, tempPath)
 const tagsPath = `${dataBasePath}/tags.json`
