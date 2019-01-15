@@ -174,14 +174,27 @@ const UpdateModal = ({
   onUpdateInstanceListRequest,
   operations,
   addOperation,
+  addOperations,
   cancelOperation,
   operationsStatus,
   operationalErrors = [],
 }) => {
 
   const downloadErrorsAsJSON = () => {
-    const serialized = JSON.stringify(operations, null, 2);
-    download(data, 'json', 'erreurs')
+    const serialized = JSON.stringify(operationalErrors, null, 2);
+    download(serialized, 'json', 'erreurs')
+  }
+
+  const handleUpdateAll = () => {
+    const operations = instances.map(instance => {
+      return {
+        type: 'discover-instance',
+        payload: {
+          instanceUrl: instance.instanceUrl
+        }
+      }
+    });
+    addOperations(operations)
   }
   return (
     <ModalCard
@@ -282,6 +295,9 @@ const UpdateModal = ({
                     }
                   </tbody>
                 </table>
+                <Button onClick={handleUpdateAll} isColor={'primary'}>
+                  Mettre à jour toutes les instances
+                </Button>
                 {
                   operationalErrors.length > 0 ?
                     <div>
@@ -313,7 +329,7 @@ const UpdateModal = ({
                   &&
                   <Column>
                     <h3 className="title is-3">
-                      Opérations à venir
+                      Opérations à venir ({operations.length - 1})
                     </h3>
                     <ul>
                       {

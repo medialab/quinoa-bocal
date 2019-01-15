@@ -115,7 +115,7 @@ class App extends Component {
         })
       })
       .catch(() => {
-        this.props.messageManager.showErrorMessage('La liste des étiquettes n\'a pas pu être chargée')
+        this.props.messageManager.showErrorMessage(`La liste des étiquettes n'a pas pu être chargée`)
       })
 
     getAllInstances(this.state.password)
@@ -195,14 +195,14 @@ class App extends Component {
               resolve({instances, newOperations, tags})
             })
             .catch(e => {
-              const message = `Impossible de récupérer les récits de l\'instance ${payload.instanceUrl}`;
+              const message = `Impossible de récupérer les récits de l'instance ${payload.instanceUrl}`;
               this.props.messageManager.showErrorMessage(message);
               this.setState({
                 operationalErrors: [
                   ...this.state.operationalErrors,
                   {
                     message,
-                    operation
+                    operation,
                   }
                 ]
               })
@@ -298,6 +298,17 @@ class App extends Component {
       setTimeout(() => this.processOperationList());
     }
   }
+  addOperations = (operations, refresh = true) => {
+    this.setState({
+      operations: [
+        ...this.state.operations,
+        ...operations
+      ]
+    });
+    if (refresh) {
+      setTimeout(() => this.processOperationList());
+    }
+  }
 
   /**
    * Cancel an operation in the queue of operations to ask to the server
@@ -333,6 +344,7 @@ class App extends Component {
     const {
       handleSearchTermChange,
       addOperation,
+      addOperations,
       cancelOperation,
     } = this;
     const stories = instances.reduce((res, instance) => {
@@ -694,6 +706,7 @@ class App extends Component {
             instances={instances}
             operations={operations}
             addOperation={addOperation}
+            addOperations={addOperations}
             cancelOperation={cancelOperation}
             operationalErrors={operationalErrors}
             operationsStatus={operationsStatus}
