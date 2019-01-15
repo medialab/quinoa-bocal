@@ -11,6 +11,7 @@ const archiver = require('archiver')
 const { v4: genId } = require('uuid')
 const { csvFormat } = require('d3-dsv')
 const serverPassword = config.password;
+var stringify = require('fast-json-stable-stringify');
 
 const {
   readFile,
@@ -104,7 +105,7 @@ const updateStoryTags = ({
             ...storyTags.filter(t => !(tags[storyId] || []).includes(t))
           ]
         }
-        return writeFile(tagsPath, JSON.stringify(tags), 'utf8')
+        return writeFile(tagsPath, stringify(tags), 'utf8')
       })
       .then(() => resolve(tags))
       .catch(reject)
@@ -207,12 +208,12 @@ const updateInstancesListHandler = (req, res) => {
             stories: []
           }
         })
-        return writeFile(`${dataBasePath}/index.json`, JSON.stringify(newIndex), 'utf8')
+        return writeFile(`${dataBasePath}/index.json`, stringify(newIndex), 'utf8')
       } catch (e) {
         return Promise.reject(e)
       }
     })
-    .then(() => writeFile(instancesPath, JSON.stringify(instancesList), 'utf8'))
+    .then(() => writeFile(instancesPath, stringify(instancesList), 'utf8'))
     .then(() => {
       res.json({
         status: 'success',
@@ -420,7 +421,7 @@ const operationHandler = (req, res) => {
                   }
                   return instance
                 })
-                return writeFile(`${dataBasePath}/index.json`, JSON.stringify(instances), 'utf8')
+                return writeFile(`${dataBasePath}/index.json`, stringify(instances), 'utf8')
               })
               /**
                * Return instances
@@ -451,7 +452,7 @@ const operationHandler = (req, res) => {
               })
               .then(storyJSON => {
                 story = storyJSON
-                return writeFile(`${dataPath}/instances/${instance.slug}/${operation.payload.storyId}/${operation.payload.storyId}.json`, JSON.stringify(story), 'utf8')
+                return writeFile(`${dataPath}/instances/${instance.slug}/${operation.payload.storyId}/${operation.payload.storyId}.json`, stringify(story), 'utf8')
               })
               /**
                * Save as HTML

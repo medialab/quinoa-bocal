@@ -29,6 +29,7 @@
     "cors": "^2.8.4",
     "d3-dsv": "^1.0.10",
     "express": "^4.16.4",
+    "fast-json-stable-stringify": "^2.0.0",
     "fs-extra": "^7.0.0",
     "uuid": "^3.3.2"
   },
