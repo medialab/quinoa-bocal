@@ -10,6 +10,7 @@ const config = require('config')
 const archiver = require('archiver')
 const { v4: genId } = require('uuid')
 const { csvFormat } = require('d3-dsv')
+// const unzip = require('unzip');
 const serverPassword = config.password;
 var stringify = require('fast-json-stable-stringify');
 
@@ -442,7 +443,11 @@ const operationHandler = (req, res) => {
               .then(() => {
                 return new Promise((res, rej) => {
 
-                  archiveStory(operation.payload.instanceUrl, operation.payload.storyId, 'json')
+                  archiveStory({
+                    instanceUrl: operation.payload.instanceUrl, 
+                    storyId: operation.payload.storyId, 
+                    format: 'json'
+                  })
                     .then(storyHSON => res(storyHSON))
                     .catch(e => {
                       console.log('catched archive error');
@@ -460,7 +465,11 @@ const operationHandler = (req, res) => {
               .then(() => {
                 return new Promise((res, rej) => {
 
-                  archiveStory(operation.payload.instanceUrl, operation.payload.storyId, 'html')
+                  archiveStory({
+                    instanceUrl: operation.payload.instanceUrl, 
+                    storyId: operation.payload.storyId, 
+                    format: 'html'
+                  })
                     .then(storyHTML => res(storyHTML))
                     .catch(e => {
                       console.log('catched archive error');
@@ -471,6 +480,40 @@ const operationHandler = (req, res) => {
               .then(storyHTML => {
                 return writeFile(`${dataPath}/instances/${instance.slug}/${operation.payload.storyId}/${operation.payload.storyId}.html`, storyHTML, 'utf8')
               })
+              /**
+               * Try to retrieve publication-friendly version
+               */
+              /*
+              .then(() => new Promise((resolve) => {
+                console.log('getting publication friendly version')
+                archiveStory({
+                  instanceUrl: operation.payload.instanceUrl, 
+                  storyId: operation.payload.storyId, 
+                  format: 'html',
+                  mode: 'multi'
+                })
+                .then(zipBuffer => {
+                return writeFile(`${dataPath}/instances/${instance.slug}/${operation.payload.storyId}/${operation.payload.storyId}.zip`, zipBuffer, 'binary')
+                })
+                .then(() => {
+                  return ensureDir(`${dataPath}/instances/${instance.slug}/${operation.payload.storyId}/publication`)
+                })
+                .then(() => {
+
+                  return new Promise((res1, rej1) => {
+                    console.log('unzipping', `${dataPath}/instances/${instance.slug}/${operation.payload.storyId}/${operation.payload.storyId}.zip`, to, `${dataPath}/instances/${instance.slug}/${operation.payload.storyId}/publication`)
+                    fs.createReadStream(`${dataPath}/instances/${instance.slug}/${operation.payload.storyId}/${operation.payload.storyId}.zip`)
+                    .pipe(unzip.Extract({ path: `${dataPath}/instances/${instance.slug}/${operation.payload.storyId}/publication` }))
+                    .on('error', rej1)
+                    .on('finish', res1)
+                  })
+                })
+                .then(resolve)
+                .catch(err => {
+                  console.log('an error occured during publication-friendly version retrieval', err)
+                  resolve();
+                })
+              }))*/
               /**
                * Auto-tag with instance metadata (to allow for more fine-grained metadata)
                */
