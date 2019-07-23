@@ -36,8 +36,8 @@ export const formatStoryForCsv = story => {
 
   return {
     ...csvMetadata,
-    'dernière modification': new Date(story.lastUpdateAt).toLocaleString(),
-    'dernière modification (ISO)': new Date(story.lastUpdateAt).toISOString()
+    'dernière modification': story.lastUpdateAt && new Date(story.lastUpdateAt).toLocaleString(),
+    'dernière modification (ISO)': story.lastUpdateAt && new Date(story.lastUpdateAt).toISOString()
   };
 }
 

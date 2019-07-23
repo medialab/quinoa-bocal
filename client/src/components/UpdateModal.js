@@ -1,6 +1,7 @@
 import React from 'react';
 import Tooltip from 'react-tooltip';
-
+import Dropzone from 'react-dropzone'
+import {csvParse} from 'd3-dsv';
 import {
   ModalCard,
   Tabs,
@@ -12,6 +13,20 @@ import {
   Notification,
 } from 'quinoa-design-library/components';
 import download from '../helpers/downloadFile';
+
+
+const parseTableForValuableInstances = (candidates, instancesColumns) => {
+  return candidates.filter(c => c.instanceUrl && c.instanceUrl.length > 0)
+  .map(candidate => {
+    return instancesColumns.reduce((res, columnName) => {
+      const key = columnName.key;
+      if (candidate[key]) {
+        res[key] = candidate[key]
+      }
+      return res;
+    }, {})
+  })
+}
 
 const OperationCard = ({operation, allowCancel=false, active, onCancel}) => {
   let header;
@@ -196,6 +211,32 @@ const UpdateModal = ({
     });
     addOperations(operations)
   }
+
+  const handleFilesDrop = inputFiles => {
+    const files = [];
+    inputFiles.forEach(f => {
+      if (f.type === 'text/csv') {
+        files.push(f)
+      }
+    })
+    const reader = new FileReader()
+
+    reader.onabort = () => console.log('file reading was aborted')
+    reader.onerror = () => console.log('file reading has failed')
+    reader.onload = () => {
+      // Do whatever you want with the file contents
+      const binaryStr = reader.result
+      const rawData = csvParse(binaryStr);
+      const valuableInstances = parseTableForValuableInstances(rawData, instancesColumns)
+      const newData = [
+        ...data,
+        ...valuableInstances
+      ]
+      onUpdateInstances(newData);
+    }
+
+    files.forEach(file => reader.readAsText(file, 'utf8'))
+  }
   return (
     <ModalCard
       isActive={updateViewVisible}
@@ -227,6 +268,17 @@ const UpdateModal = ({
                   columns={instancesColumns}
                   onChange={onUpdateInstances}
                 />
+                <Dropzone onDrop={handleFilesDrop}>
+                  {({getRootProps, getInputProps}) => (
+                    <section className="dropzone-container">
+                      <div {...getRootProps()}>
+                        <input {...getInputProps()} />
+                        <p>Glisser ici un fichier au format csv avec les champs suivants : instanceUrl, year, semester, campus, courseName, teacher
+</p>
+                      </div>
+                    </section>
+                  )}
+                </Dropzone>
                 <Button
                   isColor="primary"
                   onClick={onUpdateInstanceListRequest}
