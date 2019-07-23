@@ -28,7 +28,7 @@ const archiveStory = ({
   // }
 
   return new Promise((resolve, reject) => {
-    get(uri, options)
+    get(uri)
       .then(({ data }) => {
         resolve(data)
       })
