@@ -12,7 +12,7 @@ const { v4: genId } = require('uuid')
 const { csvFormat } = require('d3-dsv')
 // const unzip = require('unzip');
 const serverPassword = config.password;
-var stringify = require('fast-json-stable-stringify');
+const stringify = require('fast-json-stable-stringify');
 
 const {
   readFile,
@@ -31,6 +31,7 @@ const tagsPath = `${dataBasePath}/tags.json`
 const bodyParser = require('body-parser')
 
 const { discoverInstance, archiveStory } = require('./scripts/utils/client')
+const { buildStaticStory } = require('./scripts/utils/story-utils')
 const buildArchiveIndex = require('./scripts/utils/build-archive-index')
 
 /**
@@ -38,6 +39,7 @@ const buildArchiveIndex = require('./scripts/utils/build-archive-index')
  * UTILS
  * =========================
  */
+
 const readIndex = () =>
   new Promise((resolve, reject) => {
     let index
@@ -271,7 +273,11 @@ const archiveHandler = (req, res) => {
           }, [])
           return Promise.all(
             folders.map(({ instanceSlug, storyId }) =>
-              copy(`${dataBasePath}/instances/${instanceSlug}/${storyId}`, `${jobBase}/data/stories/${storyId}`)
+              buildStaticStory({
+                dataPath: `${dataBasePath}/instances/${instanceSlug}/${storyId}/${storyId}.json`, 
+                jobBase: `${jobBase}/data`, // `${jobBase}/data/stories/${storyId}`
+              })
+              // copy(`${dataBasePath}/instances/${instanceSlug}/${storyId}`, `${jobBase}/data/stories/${storyId}`)
             )
           )
         }
