@@ -73,6 +73,11 @@ const DownloadModal = ({
                           Télécharger l'archive
                         </Button>
                       </td>
+                      <td>
+                        <Button onClick={() => onDownload({items: 'stories', format: 'website', filter: {type: 'instance', payload: {instanceSlug: instance.slug}}})} isColor="primary">
+                          Fabriquer un site ...
+                        </Button>
+                      </td>
                     </tr>
                   )
                 })
@@ -104,6 +109,11 @@ const DownloadModal = ({
                       <td>
                         <Button onClick={() => onDownload({items: 'stories', format: 'archive', filter: {type: 'tag', payload: {tag}}})} isColor="warning">
                           Télécharger l'archive
+                        </Button>
+                      </td>
+                      <td>
+                        <Button onClick={() => onDownload({items: 'stories', format: 'website', filter: {type: 'tag', payload: {tag}}})} isColor="primary">
+                          Fabriquer un site ...
                         </Button>
                       </td>
                     </tr>

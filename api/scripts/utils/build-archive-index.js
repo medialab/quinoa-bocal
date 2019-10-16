@@ -104,7 +104,8 @@ const buildWholeArchive = ({ index, tags }) => {
 const buildArchiveIndex = ({
   filter,
   index,
-  tags
+  tags,
+  formData
 }) => {
   let main
   if (!filter) {
@@ -116,46 +117,48 @@ const buildArchiveIndex = ({
   }
 
   let title = ''
-  if (!filter) {
+  if (formData.title) {
+    title = formData.title
+  } else if (!filter) {
     title = `Archive complète, récupérée le ${new Date().toLocaleString()}`
   } else if (filter.type === 'instance') {
     title = `Archive de l'instance ${filter.payload.instanceSlug}, récupérée le ${new Date().toLocaleString()}`
   } else if (filter.type === 'tag') {
     title = `Archive des récits pour l'étiquette ${filter.payload.tag}, récupérée le ${new Date().toLocaleString()}`
   }
-
+  const description = formData.abstract || 'an archive of website made with fonio, a scholarly dissertations editor allowing to build standalone HTML webpages'
+  const subtitle = formData.subtitle || 'Un projet porté par FORCCAST et le médialab SciencesPo';
   return `
 <html>
   <head>
     <!-- META DUBLIN CORE -->
-    <meta name="DC.Title" lang="fr" content="Quinoa archive" />
+    <meta name="DC.Title" lang="fr" content="${title}" />
     <meta name="DC.Date.created" scheme="W3CDTF" content="2017-09-01" />
     <meta name="DC.subject" xml:lang="en-GB" content="rich content edition" />
     <!-- END META DUBLIN CORE -->
 
     <!-- REGULAR META -->
     <meta name="author" content="médialab Sciences Po" />
-    <meta name="keywords" content="data stories, data, data comment, rich media, academic editing, scholarly media, scholarly editor, academic editor" />
-    <meta name="description" content="an archive of website made with fonio, a scholarly dissertations editor allowing to build standalone HTML webpages" />
+    <meta name="description" content="${description}" />
     <meta name="viewport" content="user-scalable=no,width=device-width" />
     <!-- END REGULAR META -->
 
     <!-- META TWITTER -->
     <meta name="twitter:card" value="summary" />
-    <meta name="twitter:title" content="Quinoa archive" />
-    <meta name="twitter:description" content="an archive of website made with fonio, a scholarly dissertations editor allowing to build standalone HTML webpages" />
+    <meta name="twitter:title" content="${title}" />
+    <meta name="twitter:description" content="${description}" />
     <!-- todo : Twitter Summary card images must be at least 200x200px -->
     <!-- end meta twitter-->
 
     <!-- META GOOGLE + -->
-    <meta itemprop="name" content="Quinoa archive" />
-    <meta itemprop="description" content="an archive of website made with fonio, a scholarly dissertations editor allowing to build standalone HTML webpages" />
+    <meta itemprop="name" content="${title}" />
+    <meta itemprop="description" content="${description}" />
     <!-- END META GOOGLE + -->
 
     <!-- META OPEN GRAPH / FACEBOOK -->
-    <meta property="og:title" content="Quinoa archive" />
+    <meta property="og:title" content="${title}" />
     <meta property="og:type" content="website" />
-    <meta property="og:description" content="an archive of website made with fonio, a scholarly dissertations editor allowing to build standalone HTML webpages" />
+    <meta property="og:description" content="${description}" />
     <!-- END META OPEN GRAPH / FACEBOOK -->
     <style>
         body{
@@ -189,13 +192,17 @@ const buildArchiveIndex = ({
   </head>
   <body>
     <header>
-      <h1>Archive quinoa</h1>
-      <h2>Un projet porté par FORCCAST et le médialab SciencesPo</h2>
-      <h3>${title}</h3>
+      <h1>${title}</h1>
+      <h2>${subtitle}</h2>
     </header>
     <section>
-      ${main}
+        ${description}
     </section>
+    <main>
+      <section>
+        ${main}
+      </section>
+    </main>
   </body>
 </html>
 `

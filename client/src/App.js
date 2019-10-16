@@ -54,6 +54,7 @@ import ElasticList from './components/ElasticList';
 import StoryMetadataTable from './components/StoryMetadataTable';
 import UpdateModal from './components/UpdateModal';
 import DownloadModal from './components/DownloadModal';
+import WebsiteModal from './components/WebsiteModal';
 import TagsManager from './components/TagsManager';
 
 fontAwesomeLibrary.add(faSearch)
@@ -98,6 +99,8 @@ class App extends Component {
       activeStory: undefined,
       operationalErrors: [],
       updateViewVisible: false,
+      websiteModalVisible: false,
+      websiteModalData: {},
       updateViewMode: 'instances',
       activeFilters: Object.keys(FILTER_KEYS).reduce((res, key) => ({
         ...res,
@@ -335,6 +338,8 @@ class App extends Component {
       tags = {},
       tagModalStoryId,
       editedInstances = [],
+      websiteModalVisible,
+      websiteModalData = {},
       authenticated,
       activeStory,
       searchTerm,
@@ -502,6 +507,10 @@ class App extends Component {
       })
     }
 
+    const handleDownloadWebsite = ({data, items, format, filter}, formData) => {
+      requestArchiveDownload({data, items, format: 'archive', filter, formData}, this.state.password);
+    }
+
     const handleDownload = ({items, format, filter}) => {
       let data;
       let fileName;
@@ -533,6 +542,11 @@ class App extends Component {
       if (format === 'table') {
         const csv = csvFormat(data);
         download(csv, 'csv', fileName);
+      } else if (format === 'website') {
+        this.setState({
+          websiteModalVisible: true,
+          websiteModalData: {data, items, format, filter, fileName}
+        })
       } else if (format === 'archive') {
         requestArchiveDownload({data, items, format, filter, fileName}, this.state.password);
       }
@@ -745,6 +759,17 @@ class App extends Component {
             onClose={() => {
               this.setState({
                 downloadOptionsVisible: false
+              })
+            }}
+          />
+          <WebsiteModal
+            isActive={websiteModalVisible}
+            data={websiteModalData}
+            onDownload={handleDownloadWebsite}
+            onClose={() => {
+              this.setState({
+                websiteModalVisible: false,
+                websiteModalData: {}
               })
             }}
           />

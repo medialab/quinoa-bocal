@@ -170,3 +170,7 @@ form input[type="password"] {
 .table.flexed th:first-child{
   flex: 1;
 }
+
+.quinoa-story-player .header-container{
+  position: absolute!important;
+}

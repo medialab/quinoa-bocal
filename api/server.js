@@ -229,12 +229,14 @@ const updateInstancesListHandler = (req, res) => {
 }
 const archiveHandler = (req, res) => {
   const { body = {} } = req
-  const { data, format, filter, fileName } = body
+  const { data, format, filter, fileName, formData = {} } = body
   const jobId = genId()
   const jobBase = `${tempBasePath}/${jobId}`
-  const outputPath = `${jobBase}/archive/${fileName}.zip`
+  const outputFileName = formData.archiveName || fileName || 'archive'
+  const outputPath = `${jobBase}/archive/${outputFileName}.zip`
   let index
   let tags
+  console.log('ok', outputPath)
   if (format === 'archive') {
     readIndex()
       .then((thatIndex) => {
@@ -278,7 +280,8 @@ const archiveHandler = (req, res) => {
         const html = buildArchiveIndex({
           filter,
           index,
-          tags
+          tags,
+          formData,
         })
         return writeFile(`${jobBase}/data/index.html`, html, 'utf8')
       })
@@ -314,7 +317,7 @@ const archiveHandler = (req, res) => {
           archive.pipe(output)
 
           const dirPath = `${tempPath}/${jobId}/data`
-          archive.directory(dirPath, fileName)
+          archive.directory(dirPath, outputFileName)
 
           // finalize the archive (ie we are done appending files but streams have to finish yet)
           // 'close', 'end' or 'finish' may be fired right after calling this method so register to them beforehand
@@ -339,7 +342,7 @@ const archiveHandler = (req, res) => {
       .then(() => {
         return new Promise((resolve, reject) => {
           res.setHeader('Content-Type', 'application/zip')
-          res.sendFile(outputPath, `${fileName}.zip`, err => {
+          res.sendFile(outputPath, `${outputFileName}.zip`, err => {
             if (err) {
               reject(err)
             } else {
