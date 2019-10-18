@@ -1,5 +1,62 @@
 const slugify = require('slugify')
 
+const searchScript = `
+
+function debounce(func, wait, immediate) {
+  var timeout;
+  return function() {
+    var context = this, args = arguments;
+    var later = function() {
+      timeout = null;
+      if (!immediate) func.apply(context, args);
+    };
+    var callNow = immediate && !timeout;
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+    if (callNow) func.apply(context, args);
+  };
+};
+
+var foundIndex = 0;
+var found = []
+var search = debounce(function(evt) {
+  var val = evt.target.value.toLowerCase();
+  if (val.length > 2 || val.length === 0) {
+    var aTags = document.getElementsByTagName("a");
+    found = [];
+    foundIndex = 0;
+
+    for (var i = 0; i < aTags.length; i++) {
+      if (aTags[i].textContent.toLowerCase().includes(val)) {
+        found.push(aTags[i]);
+      }
+    }
+    if (found.length) {
+      found[foundIndex].scrollIntoView({behavior: 'smooth', block: 'center', inline: 'center'});
+    }
+  } else {
+    found = [];
+    foundIndex = 0;
+  }
+}, 300);
+
+var onEnter = function(evt) {
+  if (evt.keyCode === 13) {
+    foundIndex ++;
+    if (foundIndex > found.length - 1) {
+      foundIndex = 0;
+    }
+    if (found[foundIndex]) {
+      found[foundIndex].scrollIntoView({behavior: 'smooth', block: 'center', inline: 'center'});
+    }
+  }
+};
+
+const searchInput = document.getElementById('search')
+
+searchInput.addEventListener('input', search);
+searchInput.addEventListener('keyup', onEnter);`;
+
 const indexStyle = `
 body{
   font-family: "Merriweather", serif;
@@ -24,6 +81,10 @@ header h2 {
   font-size: 1rem;
   font-style: italic;
   color: darkgrey;
+}
+
+header #description {
+  font-size: .9rem;
 }
 
 header input{
@@ -78,6 +139,9 @@ h3{
     padding-right: 3rem;
     box-sizing: content-box;
   }
+  header #description{
+    display: none;
+  }
   header input{
     width: calc(100% - 4rem);
   }
@@ -89,6 +153,24 @@ h3{
   }
 }
 `
+
+function linkify(inputText, replacementText) {
+  var replacedText, replacePattern1, replacePattern2, replacePattern3;
+
+  //URLs starting with http://, https://, or ftp://
+  replacePattern1 = /(\b(https?|ftp):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/gim;
+  replacedText = inputText.replace(replacePattern1, replacementText ? `<a href="$1" rel="noopener" target="_blank">${replacementText}</a>` : '<a href="$1" rel="noopener" target="_blank">$1</a>');
+
+  //URLs starting with "www." (without // before it, or it'd re-link the ones done above).
+  replacePattern2 = /(^|[^\/])(www\.[\S]+(\b|$))/gim;
+  replacedText = replacedText.replace(replacePattern2, replacementText ? `$1<a href="http://$2" target="_blank">${replacementText}</a>'` : '$1<a href="http://$2" target="_blank">$2</a>');
+
+  //Change email addresses to mailto:: links.
+  replacePattern3 = /(([a-zA-Z0-9\-\_\.])+@[a-zA-Z\_]+?(\.[a-zA-Z]{2,6})+)/gim;
+  replacedText = replacedText.replace(replacePattern3, '<a href="mailto:$1">$1</a>');
+
+  return replacedText;
+}
 
 const slugifyStory = story => {
   return `${slugify(story.metadata.title.toLowerCase().replace(/\W/g, '-'))}-${story.id.split('-').pop()}`
@@ -141,7 +223,7 @@ ${
     teacher = teacher && teacher.split('metadata:teacher:')[1]
     return `
       <li>
-        <a href="${slug}/index.html">
+        <a target="blank" rel="noopener" href="${slug}/index.html">
           <h3>
               ${story.metadata.title}${story.metadata.subtitle ? ' - ' + story.metadata.subtitle : ''}
           </h3>
@@ -188,7 +270,7 @@ stories
   teacher = teacher && teacher.split('metadata:teacher:')[1]
   return `
     <li>
-      <a href="${slug}/index.html">
+      <a target="blank" rel="noopener" href="${slug}/index.html">
         <h3>
             ${story.metadata.title}${story.metadata.subtitle ? ' - ' + story.metadata.subtitle : ''}
         </h3>
@@ -263,6 +345,7 @@ return `
 <head>
 
   <meta charset="UTF-8">
+  <title>${title}</title>
   <!-- META DUBLIN CORE -->
   <meta name="DC.Title" lang="fr" content="${title}" />
   <meta name="DC.Date.created" scheme="W3CDTF" content="2017-09-01" />
@@ -304,10 +387,16 @@ return `
     <h1>${title}</h1>
     <h2>${subtitle}</h2>
     <input id="search" type="text" placeholder="chercher un récit"></input>
+    <div id="description">
+      <p>
+      ${
+        linkify(description, 'lien')
+        .trim()
+        .replace(/\n/g, '</p><p>')
+      }
+      </p>
+    </div>
   </header>
-  <section>
-      ${description}
-  </section>
   <main>
     <section>
       ${main}
@@ -315,61 +404,7 @@ return `
   </main>
 </body>
 <script>
-
-function debounce(func, wait, immediate) {
-  var timeout;
-  return function() {
-    var context = this, args = arguments;
-    var later = function() {
-      timeout = null;
-      if (!immediate) func.apply(context, args);
-    };
-    var callNow = immediate && !timeout;
-    clearTimeout(timeout);
-    timeout = setTimeout(later, wait);
-    if (callNow) func.apply(context, args);
-  };
-};
-
-var foundIndex = 0;
-var found = []
-var search = debounce(function(evt) {
-  var val = evt.target.value.toLowerCase();
-  if (val.length > 2 || val.length === 0) {
-    var aTags = document.getElementsByTagName("a");
-    found = [];
-    foundIndex = 0;
-
-    for (var i = 0; i < aTags.length; i++) {
-      if (aTags[i].textContent.toLowerCase().includes(val)) {
-        found.push(aTags[i]);
-      }
-    }
-    if (found.length) {
-      found[foundIndex].scrollIntoView({behavior: 'smooth', block: 'center', inline: 'center'});
-    }
-  } else {
-    found = [];
-    foundIndex = 0;
-  }
-}, 300);
-
-var onEnter = function(evt) {
-  if (evt.keyCode === 13) {
-    foundIndex ++;
-    if (foundIndex > found.length - 1) {
-      foundIndex = 0;
-    }
-    if (found[foundIndex]) {
-      found[foundIndex].scrollIntoView({behavior: 'smooth', block: 'center', inline: 'center'});
-    }
-  }
-};
-
-const searchInput = document.getElementById('search')
-
-searchInput.addEventListener('input', search);
-searchInput.addEventListener('keyup', onEnter);
+${searchScript}
 </script>
 </html>
 `

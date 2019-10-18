@@ -28,7 +28,6 @@ const slugifyStory = story => {
   return `${slugify(story.metadata.title.toLowerCase().replace(/\W/g, '-'))}-${story.id.split('-').pop()}`
 }
 
-
 const statifyStory = story => {
   return Object.assign(story, {
     resources: Object.keys(story.resources).reduce((res, resourceId) => {
@@ -270,11 +269,12 @@ const buildIndex = story => {
 
 const outputImage = ({base64, outputPath, fileName, ext}) => {
   try {
-    base64ToImage(base64, outputPath, {'fileName': fileName, 'type':ext})
+    base64ToImage(base64, outputPath, {'fileName': fileName, 'type': ext})
   } catch(e) {
     console.error('issue with base 64 creation');
     console.log(base64.substr(0, 100))
     console.log(e)
+    throw new Error()
   }
 }
 
@@ -291,15 +291,20 @@ const buildStaticStory = ({
     .forEach(resourceId => {
       const resource = story.resources[resourceId]
       if (resource.metadata.type === 'image') {
+        const ext = ['png', 'jpeg', 'jpg'].includes(resource.metadata.ext) ? resource.metadata.ext : 'jpg';
+        const base64 = ['png', 'jpeg', 'jpg'].includes(story.resources[resourceId].data.base64) ? story.resources[resourceId].data.base64 :
+        story.resources[resourceId].data.base64.replace(/^data:image\/.*;base64/, 'data:image/jpg;base64')
         // const outputFile = `${jobBase}/resources/${resource.id}.${resource.metadata.ext}`;
-        story.resources[resourceId].data.src = `resources/${resource.id}.${resource.metadata.ext}`;
+        story.resources[resourceId].data.src = `/${slugifyStory(story)}/resources/${resource.id}.${ext}`;
+        console.log('output', story.resources[resourceId].data.src)
         imagesToCreate.push({
-          base64: story.resources[resourceId].data.base64,
+          base64: base64,
           outputPath: `${jobBase}/resources/`, 
-          fileName: `${resource.id}.${resource.metadata.ext}`, 
+          fileName: `${resource.id}.${ext}`, 
           ext: resource.metadata.ext
         })
         delete story.resources[resourceId].data.base64;
+        story.resources[resourceId].metadata.ext = ext;
       }
     })
     fs.ensureDir(`${jobBase}/resources`)
