@@ -1,7 +1,97 @@
 const slugify = require('slugify')
 
+const indexStyle = `
+body{
+  font-family: "Merriweather", serif;
+  background: #fdfff8;
+}
+
+
+header{
+  position: fixed;
+  left: 1rem;
+  top: 2.3rem;
+  padding-top: 1rem;
+  max-width: calc(30% - 1rem);
+  padding-right: 2rem;
+  box-sizing: content-box;
+}
+
+header h1 {
+  font-size: 1.6rem;
+}
+header h2 {
+  font-size: 1rem;
+  font-style: italic;
+  color: darkgrey;
+}
+
+header input{
+  width: calc(100% - 3rem);
+  width: 100%;
+  padding: .5rem;
+  outline: none;
+  border: 1px solid lightgrey;
+  font-family: "Merriweather", serif;
+}
+header input:focus{
+  border : 1px solid darkgrey;
+}
+main {
+  left: 30%;
+  width: 70%;
+  position: relative;
+  padding-top: 1rem;
+}
+ul{
+  list-style: none;
+  padding: 0;
+  width: 100%;
+}
+li{
+  background: #333;
+  color: white;
+  margin-bottom: 1rem;
+  padding: 1rem;
+  margin: 1rem;
+  margin-right: 2rem;
+  adow: 0px 3px 1px -2px rgba(0, 0, 0, 0.2), 0px 2px 2px 0px rgba(0, 0, 0, 0.14), 0px 1px 5px 0px rgba(0, 0, 0, 0.12);
+}
+
+li a{
+  text-decoration: none;
+  color: inherit;
+}
+
+h3{
+  font-size: 1.5rem;
+}
+
+@media (max-width: 800px) {
+  header{
+    max-width: 100%;
+    min-width: 100%;
+    top: 0;
+    background: #fdfff8;
+    z-index: 2;
+    padding: .5rem;
+    padding-right: 3rem;
+    box-sizing: content-box;
+  }
+  header input{
+    width: calc(100% - 4rem);
+  }
+  main{
+    top: 35%;
+    max-width: 100%;
+    width: 100%;
+    left: 0;
+  }
+}
+`
+
 const slugifyStory = story => {
-  return `${slugify(story.metadata.title.toLowerCase())}-${story.id.split('-').pop()}`
+  return `${slugify(story.metadata.title.toLowerCase().replace(/\W/g, '-'))}-${story.id.split('-').pop()}`
 }
 
 const buildInstanceHeader = instance => `
@@ -36,50 +126,82 @@ return `
   Récits archivés pour cette instance:
 </p>
 <ul>
-  ${
-instance.stories.map(story => {
-  const slug = slugifyStory(story)
-  return `
+${
+  instance.
+  stories
+  .sort((storyA, storyB) => {
+    if (storyA.metadata.title > storyB.metadata.title) {
+      return 1;
+    }
+    return -1;
+  })
+  .map(story => {
+    const slug = slugifyStory(story)
+    let teacher = tags[story.id].find(t => t.indexOf('metadata:teacher:') === 0)
+    teacher = teacher && teacher.split('metadata:teacher:')[1]
+    return `
       <li>
-        <a href="${slug}/index.html">${story.metadata.title}${story.metadata.subtitle ? ' - ' + story.metadata.subtitle : ''}</a> - par ${story.metadata.authors.join()}
+        <a href="${slug}/index.html">
+          <h3>
+              ${story.metadata.title}${story.metadata.subtitle ? ' - ' + story.metadata.subtitle : ''}
+          </h3>
+            ${story.metadata.authors.length > 0 ? `<p>Auteur.e.s : ${story.metadata.authors.join(', ')}</p>` : ''}
+            ${teacher && `<p>Enseignant.e : ${teacher}</p>`}
+        </a>
       </li>
       `
-}).join('\n')
-}
+  }).join('\n')
+  }
 </ul>
 </div>
 `
 }
 
 const buildTagArchive = ({ index, tags, tag }) => {
-const stories = index.reduce((result, instance) => {
-  const relevantStories = instance.stories.filter(story => {
-    const storyId = story.id
-    const storyTags = tags[storyId]
-    if (storyTags) {
-      return storyTags.includes(tag)
-    }
-  })
-    .map(s => Object.assign(s, { instanceSlug: instance.slug }))
+  const stories = index.reduce((result, instance) => {
+    const relevantStories = instance.stories.filter(story => {
+      const storyId = story.id
+      const storyTags = tags[storyId]
+      if (storyTags) {
+        return storyTags.includes(tag)
+      }
+    })
+      .map(s => Object.assign(s, { instanceSlug: instance.slug }))
 
-  return [...result, ...relevantStories]
-}, [])
-return index.map(instance => {
-  return `
+    return [...result, ...relevantStories]
+  }, [])
+
+  return index.map(instance => {
+    return `
 <ul>
 ${
-stories.map(story => {
+stories
+.sort((storyA, storyB) => {
+  if (storyA.metadata.title > storyB.metadata.title) {
+    return 1;
+  }
+  return -1;
+})
+.map(story => {
   const slug = slugifyStory(story)
+  let teacher = tags[story.id].find(t => t.indexOf('metadata:teacher:') === 0)
+  teacher = teacher && teacher.split('metadata:teacher:')[1]
   return `
     <li>
-      <a href="${slug}/index.html">${story.metadata.title}${story.metadata.subtitle ? ' - ' + story.metadata.subtitle : ''}</a> - par ${story.metadata.authors.join()} (instance "${story.instanceSlug}")
+      <a href="${slug}/index.html">
+        <h3>
+            ${story.metadata.title}${story.metadata.subtitle ? ' - ' + story.metadata.subtitle : ''}
+        </h3>
+          ${story.metadata.authors.length > 0 ? `<p>Auteur.e.s : ${story.metadata.authors.join(', ')}</p>` : ''}
+          ${teacher && `<p>Enseignant.e : ${teacher}</p>`}
+      </a>
     </li>
     `
 }).join('\n')
 }
 </ul>
 `
-})
+}).join('\n')
 }
 
 const buildWholeArchive = ({ index, tags }) => {
@@ -139,6 +261,8 @@ const subtitle = formData.subtitle || 'Un projet porté par FORCCAST et le médi
 return `
 <html>
 <head>
+
+  <meta charset="UTF-8">
   <!-- META DUBLIN CORE -->
   <meta name="DC.Title" lang="fr" content="${title}" />
   <meta name="DC.Date.created" scheme="W3CDTF" content="2017-09-01" />
@@ -168,40 +292,18 @@ return `
   <meta property="og:type" content="website" />
   <meta property="og:description" content="${description}" />
   <!-- END META OPEN GRAPH / FACEBOOK -->
-  <style>
-      body{
-        display: flex;
-        flex-flow: column nowrap;
-        align-items: center;
-        font-family: sans-serif;
-      }
-      section,header{
-        max-width: 500px;
-      }
-      ul{
-        list-style: none;
-        padding: 0;
-        width: 100%;
-      }
-      li{
-        background: #333;
-        color: white;
-        margin-bottom: 1rem;
-        padding: 1rem;
-      }
 
-      li a{
-        color: white;
-        display: block;
-        font-size: 2rem;
-        margin-bottom: 1rem;
-      }
+  <link href="https://fonts.googleapis.com/css?family=Merriweather:400,400i,700&display=swap" rel="stylesheet">
+
+  <style>
+      ${indexStyle}
     </style>
 </head>
 <body>
   <header>
     <h1>${title}</h1>
     <h2>${subtitle}</h2>
+    <input id="search" type="text" placeholder="chercher un récit"></input>
   </header>
   <section>
       ${description}
@@ -212,6 +314,63 @@ return `
     </section>
   </main>
 </body>
+<script>
+
+function debounce(func, wait, immediate) {
+  var timeout;
+  return function() {
+    var context = this, args = arguments;
+    var later = function() {
+      timeout = null;
+      if (!immediate) func.apply(context, args);
+    };
+    var callNow = immediate && !timeout;
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+    if (callNow) func.apply(context, args);
+  };
+};
+
+var foundIndex = 0;
+var found = []
+var search = debounce(function(evt) {
+  var val = evt.target.value.toLowerCase();
+  if (val.length > 2 || val.length === 0) {
+    var aTags = document.getElementsByTagName("a");
+    found = [];
+    foundIndex = 0;
+
+    for (var i = 0; i < aTags.length; i++) {
+      if (aTags[i].textContent.toLowerCase().includes(val)) {
+        found.push(aTags[i]);
+      }
+    }
+    if (found.length) {
+      found[foundIndex].scrollIntoView({behavior: 'smooth', block: 'center', inline: 'center'});
+    }
+  } else {
+    found = [];
+    foundIndex = 0;
+  }
+}, 300);
+
+var onEnter = function(evt) {
+  if (evt.keyCode === 13) {
+    foundIndex ++;
+    if (foundIndex > found.length - 1) {
+      foundIndex = 0;
+    }
+    if (found[foundIndex]) {
+      found[foundIndex].scrollIntoView({behavior: 'smooth', block: 'center', inline: 'center'});
+    }
+  }
+};
+
+const searchInput = document.getElementById('search')
+
+searchInput.addEventListener('input', search);
+searchInput.addEventListener('keyup', onEnter);
+</script>
 </html>
 `
 }

@@ -271,18 +271,20 @@ const archiveHandler = (req, res) => {
               }))
             ]
           }, [])
-          return Promise.all(
-            folders.map(({ instanceSlug, storyId }) =>
-              buildStaticStory({
+          console.log('archive bundler :: building static stories')
+          return folders.reduce((cur, { instanceSlug, storyId }, index) => {
+            return cur.then(() => {
+              console.log('building static story %s of %s', index + 1, folders.length)
+              return buildStaticStory({
                 dataPath: `${dataBasePath}/instances/${instanceSlug}/${storyId}/${storyId}.json`, 
                 jobBase: `${jobBase}/data`, // `${jobBase}/data/stories/${storyId}`
               })
-              // copy(`${dataBasePath}/instances/${instanceSlug}/${storyId}`, `${jobBase}/data/stories/${storyId}`)
-            )
-          )
+            })
+          }, Promise.resolve())
         }
       })
       .then(() => {
+        console.log('archive bundler :: building archive index')
         const html = buildArchiveIndex({
           filter,
           index,
@@ -295,6 +297,7 @@ const archiveHandler = (req, res) => {
         return writeFile(`${jobBase}/data/data.csv`, csvFormat(data), 'utf8')
       })
       .then(() => {
+        console.log('archive bundler :: creating zip')
         return new Promise((resolve, reject) => {
           const output = createWriteStream(outputPath)
           const archive = archiver('zip', {
@@ -346,6 +349,7 @@ const archiveHandler = (req, res) => {
         })
       })
       .then(() => {
+        console.log('archive bundler :: returning zip')
         return new Promise((resolve, reject) => {
           res.setHeader('Content-Type', 'application/zip')
           res.sendFile(outputPath, `${outputFileName}.zip`, err => {

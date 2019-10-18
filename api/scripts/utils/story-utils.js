@@ -25,7 +25,7 @@ const bundle = fs.readFileSync(buildPath, 'utf8').replace(/(^\/\/.*$)/gm, '');
 // const readmeEnPath = path.resolve(__dirname + '/../../../resources/export-readmes/README.en.md');
 
 const slugifyStory = story => {
-  return `${slugify(story.metadata.title.toLowerCase())}-${story.id.split('-').pop()}`
+  return `${slugify(story.metadata.title.toLowerCase().replace(/\W/g, '-'))}-${story.id.split('-').pop()}`
 }
 
 
@@ -269,7 +269,13 @@ const buildIndex = story => {
 }
 
 const outputImage = ({base64, outputPath, fileName, ext}) => {
-  base64ToImage(base64, outputPath, {'fileName': fileName, 'type':ext})
+  try {
+    base64ToImage(base64, outputPath, {'fileName': fileName, 'type':ext})
+  } catch(e) {
+    console.error('issue with base 64 creation');
+    console.log(base64.substr(0, 100))
+    console.log(e)
+  }
 }
 
 const buildStaticStory = ({
@@ -277,6 +283,7 @@ const buildStaticStory = ({
   dataPath,
 }) => {
   return new Promise((resolve, reject) => {
+    console.log('build static story from', dataPath)
     const story = JSON.parse(fs.readFileSync(dataPath))
     const imagesToCreate = []
     const jobBase = `${inputJobBase}/${slugifyStory(story)}`
@@ -303,6 +310,7 @@ const buildStaticStory = ({
     .then(() => fs.writeFile(`${jobBase}/story.json`, JSON.stringify(story), 'utf8'))
     .then(() => fs.writeFile(`${jobBase}/bundle.js`, bundle), 'utf8')
     .then(() => {
+      console.log('done for static story from', dataPath)
       resolve()
     })
     .catch(reject)
