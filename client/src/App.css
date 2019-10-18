@@ -41,6 +41,7 @@
 .App aside{
   flex: 1;
   max-width: 30%;
+  min-width: 30%;
   overflow-y: auto;
   padding: 1rem;
 }
@@ -53,7 +54,7 @@
 .elastic-list-container{
   display: flex;
   flex-flow: row nowrap;
-  height: 100%;
+  height: calc(100% - 5rem);
   padding: 1rem;
   padding-top: 0;
   overflow: hidden;
@@ -75,6 +76,7 @@
   box-sizing: content-box;
   min-height: 2.5rem;
   font-size: .8rem;
+  padding-top: 0;
 }
 
 .elastic-list-column .values{
@@ -89,7 +91,13 @@
   border: 1px solid darkgrey;
   transition: all .5s ease;
   cursor: pointer;
-  min-height: 1rem;
+  min-height: 3rem;
+  font-size: .8rem;
+}
+
+.elastic-list-item.is-empty {
+  min-height: 0;
+  font-size: .4rem;
 }
 
 .elastic-list-item:nth-child(odd){

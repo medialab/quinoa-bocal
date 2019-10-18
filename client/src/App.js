@@ -572,7 +572,7 @@ class App extends Component {
           <Helmet>
             <title>Bocal | administration des archives quinoa</title>
           </Helmet>
-          <StretchedLayoutItem isFlex={1} style={{height: '100%'}} >
+          <StretchedLayoutItem isFlex={1} style={{height: '100%', maxWidth: '50%', minWidth: '50%'}} >
             <StretchedLayoutContainer style={{height: '100%'}}>
               <StretchedLayoutItem>
                 <header className="header">
@@ -587,6 +587,14 @@ class App extends Component {
                   activeFilters={activeFilters}
                   onToggleFilter={handleTogglerFilter}
                 />
+                <StretchedLayoutContainer style={{ padding: '1rem'}} isDirection="horizontal">
+                  <StretchedLayoutItem isFlex={1}>
+                    <SearchInput value={searchTerm} onUpdate={handleSearchTermChange} placeholder={'chercher un récit'} />
+                  </StretchedLayoutItem>
+                  <StretchedLayoutItem>
+                    {visibleStories.length}/{stories.length} travaux visibles
+                  </StretchedLayoutItem>
+                </StretchedLayoutContainer>
               </StretchedLayoutItem>
               <StretchedLayoutItem className="stories-list-container" isFlex={1}>
                 {
@@ -633,18 +641,16 @@ class App extends Component {
               <StretchedLayoutItem>
                 <StretchedLayoutContainer style={{padding: '1rem', alignItems: 'center'}} isDirection={'horizontal'}>
                   <StretchedLayoutItem isFlex={1}>
-                    <SearchInput value={searchTerm} onUpdate={handleSearchTermChange} placeholder={'chercher un récit'} />
-                  </StretchedLayoutItem>
-                  <StretchedLayoutItem>
-                    {visibleStories.length}/{stories.length} travaux visibles
-                  </StretchedLayoutItem>
-                  <StretchedLayoutItem>
                     <Button 
+                      isFullWidth
                       onClick={() => this.setState({updateViewVisible: true})} 
                       isColor={operationsStatus === 'inactive' ? 'primary' : 'warning'}>
                       Mettre à jour...
                     </Button>
+                  </StretchedLayoutItem>
+                  <StretchedLayoutItem isFlex={1}>
                     <Button 
+                      isFullWidth
                       onClick={() => this.setState({downloadOptionsVisible: true})} 
                       isColor={'info'}>
                       Télécharger...
@@ -774,6 +780,7 @@ class App extends Component {
             }}
           />
           <Tooltip id="tooltip" />
+          <Tooltip id="card-tooltip" />
         </StretchedLayoutContainer>
     );
   }

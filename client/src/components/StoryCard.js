@@ -58,7 +58,7 @@ const StoryCard = ({
       <b
         data-tip={tipContent}
         data-html={true}
-        data-for="tooltip"
+        data-for="card-tooltip"
       >{abbrevString(story.metadata.title, MAX_STR_LEN)}</b>
       {
         actions.map(action => {

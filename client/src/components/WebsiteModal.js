@@ -101,7 +101,7 @@ const WebsiteModal = ({
                     <textarea value={abstract} onChange={handleAbstractChange} className="textarea" type="text" />
                   </Control>
                 </Field>
-                <Field>
+                {/* <Field>
                   <Label>
                     URL de la publication
                   </Label>
@@ -116,7 +116,7 @@ const WebsiteModal = ({
                   <Control>
                     <input value={archiveName} onChange={handleArchiveNameChange} className="input" type="text" />
                   </Control>
-                </Field>
+                </Field> */}
               </StretchedLayoutContainer>
             </form>
             <StretchedLayoutContainer isDirection="horizontal">

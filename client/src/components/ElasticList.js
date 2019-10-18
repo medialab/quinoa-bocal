@@ -51,7 +51,7 @@ const ElasticList = ({
                     return (
                       <div 
                         key={index2}
-                        className={`elastic-list-item ${isActive ? 'is-active': ''}`}
+                        className={`elastic-list-item ${isActive ? 'is-active': ''} ${value.count === 0 ? 'is-empty': ''}`}
                         style={{
                           height: height + '%'
                         }}
