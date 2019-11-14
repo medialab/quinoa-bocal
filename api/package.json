@@ -22,7 +22,7 @@
   "dependencies": {
     "ajv": "^6.5.4",
     "archiver": "^3.0.0",
-    "axios": "^0.18.0",
+    "axios": "^0.18.1",
     "base64-to-image": "^1.0.2",
     "bcrypt": "^3.0.2",
     "body-parser": "^1.18.3",
