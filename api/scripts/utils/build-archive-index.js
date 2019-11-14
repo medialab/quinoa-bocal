@@ -253,7 +253,7 @@ const buildTagArchive = ({ index, tags, tag }) => {
     return [...result, ...relevantStories]
   }, [])
 
-  return index.map(instance => {
+  // return index.map(instance => {
     return `
 <ul>
 ${
@@ -283,7 +283,7 @@ stories
 }
 </ul>
 `
-}).join('\n')
+// }).join('\n')
 }
 
 const buildWholeArchive = ({ index, tags }) => {
@@ -406,6 +406,7 @@ return `
 <script>
 ${searchScript}
 </script>
+<script src="bundle.js"></script>
 </html>
 `
 }

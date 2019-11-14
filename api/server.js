@@ -17,6 +17,7 @@ const stringify = require('fast-json-stable-stringify');
 const {
   readFile,
   writeFile,
+  readFileSync,
   ensureDir,
   createWriteStream,
   remove,
@@ -251,6 +252,11 @@ const archiveHandler = (req, res) => {
       })
       .then(() => ensureDir(`${jobBase}/data`))
       .then(() => ensureDir(`${jobBase}/archive`))
+      .then(() => {
+        console.log('archive::builder copying bundle');
+        const bundleData = readFileSync(__dirname + '/resources/playerBuild.js', 'utf-8')
+        return writeFile(`${jobBase}/data/bundle.js`, bundleData, 'utf-8')
+      })
       .then(() => {
         if (!filter) {
           return copy(dataBasePath, `${jobBase}/data/archive`)

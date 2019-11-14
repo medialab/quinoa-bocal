@@ -202,65 +202,32 @@ const buildIndex = story => {
       </div>
       <div id="mount"></div>
       <script>
-        window.__locale = "${locale}";
-        
-        function loadJS(url, location){
-          //url is URL of external file, implementationCode is the code
-          //to be called from the file, location is the location to 
-          //insert the <script> element
-
-          var scriptTag = document.createElement('script');
-          scriptTag.src = url;
-          location.appendChild(scriptTag);
-      };
-      function loadJSON(URL, callback) {   
-
-        var xobj = new XMLHttpRequest();
-            xobj.overrideMimeType("application/json");
-        xobj.open('GET', URL, true); // Replace 'my_data' with the path to your file
-        xobj.onreadystatechange = function () {
-              if (xobj.readyState == 4 && xobj.status == "200") {
-                // Required use of an anonymous callback as .open will NOT return a value but simply returns undefined in asynchronous mode
-                callback(xobj.responseText);
-              }
-        };
-        xobj.send(null);  
-     }
-     function prepareStory(story, prefix) {
-       return Object.assign(story, {
-         resources: Object.keys(story.resources).reduce(function(res, resourceId) {
-            var resource = story.resources[resourceId];
-            var newResource;
-            if (resource.data && resource.data.filePath) {
-              newResource = Object.assign(resource, {
-                data: Object.assign(resource.data, {
-                  src: prefix + resource.data.filePath,
-                  filePath: prefix + resource.data.filePath
+        function prepareStory(story, prefix) {
+          return Object.assign(story, {
+            resources: Object.keys(story.resources).reduce(function(res, resourceId) {
+              var resource = story.resources[resourceId];
+              var newResource;
+              if (resource.data && resource.data.src) {
+                newResource = Object.assign(resource, {
+                  data: Object.assign(resource.data, {
+                    // src: prefix +  resource.data.filePath,
+                    src: "resources/" +  resource.data.src.split('/').pop(),
+                    filePath: prefix + resource.data.filePath
+                  })
                 })
+              } else newResource = resource;
+              return Object.assign(res, {
+                [resourceId]: newResource
               })
-            } else newResource = resource;
-            return Object.assign(res, {
-              [resourceId]: newResource
-            })
-         }, {})
-       })
-     }
-      var urlPrefix = window.location.href.split('/').reverse().slice(1).reverse().join('/')  + '/';
-    
-      window.__urlPrefix = urlPrefix;
-      /**
-       * Dynamically loading the JSON data
-       */
-      loadJSON(urlPrefix + 'story.json', function(story) {
-        window.__story = prepareStory(JSON.parse(story), urlPrefix);
-        /**
-         * Dynamically loading the html bundle 
-         */
-        var bundleURL = urlPrefix + 'bundle.js';
-        loadJS(bundleURL, document.body);
-      })
-      
+            }, {})
+          })
+        }
+        var urlPrefix = window.location.href.split('/').reverse().slice(1).reverse().join('/')  + '/';
+        window.__locale = "${locale}";
+        window.__story = prepareStory(${JSON.stringify(story)}, urlPrefix)
       </script>
+      <script src="../bundle.js"></script>
+      
     </body>
     </html>
     `;
