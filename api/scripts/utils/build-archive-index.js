@@ -55,7 +55,7 @@ var onEnter = function(evt) {
 const searchInput = document.getElementById('search')
 
 searchInput.addEventListener('input', search);
-searchInput.addEventListener('keyup', onEnter);`;
+searchInput.addEventListener('keyup', onEnter);`
 
 const indexStyle = `
 body{
@@ -154,22 +154,22 @@ h3{
 }
 `
 
-function linkify(inputText, replacementText) {
-  var replacedText, replacePattern1, replacePattern2, replacePattern3;
+function linkify (inputText, replacementText) {
+  var replacedText, replacePattern1, replacePattern2, replacePattern3
 
   //URLs starting with http://, https://, or ftp://
-  replacePattern1 = /(\b(https?|ftp):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/gim;
-  replacedText = inputText.replace(replacePattern1, replacementText ? `<a href="$1" rel="noopener" target="_blank">${replacementText}</a>` : '<a href="$1" rel="noopener" target="_blank">$1</a>');
+  replacePattern1 = /(\b(https?|ftp):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/gim
+  replacedText = inputText.replace(replacePattern1, replacementText ? `<a href="$1" rel="noopener" target="_blank">${replacementText}</a>` : '<a href="$1" rel="noopener" target="_blank">$1</a>')
 
   //URLs starting with "www." (without // before it, or it'd re-link the ones done above).
-  replacePattern2 = /(^|[^\/])(www\.[\S]+(\b|$))/gim;
-  replacedText = replacedText.replace(replacePattern2, replacementText ? `$1<a href="http://$2" target="_blank">${replacementText}</a>'` : '$1<a href="http://$2" target="_blank">$2</a>');
+  replacePattern2 = /(^|[^\/])(www\.[\S]+(\b|$))/gim
+  replacedText = replacedText.replace(replacePattern2, replacementText ? `$1<a href="http://$2" target="_blank">${replacementText}</a>'` : '$1<a href="http://$2" target="_blank">$2</a>')
 
   //Change email addresses to mailto:: links.
-  replacePattern3 = /(([a-zA-Z0-9\-\_\.])+@[a-zA-Z\_]+?(\.[a-zA-Z]{2,6})+)/gim;
-  replacedText = replacedText.replace(replacePattern3, '<a href="mailto:$1">$1</a>');
+  replacePattern3 = /(([a-zA-Z0-9\-\_\.])+@[a-zA-Z\_]+?(\.[a-zA-Z]{2,6})+)/gim
+  replacedText = replacedText.replace(replacePattern3, '<a href="mailto:$1">$1</a>')
 
-  return replacedText;
+  return replacedText
 }
 
 const slugifyStory = story => {
@@ -198,8 +198,8 @@ const buildInstanceHeader = instance => `
 `
 
 const buildInstanceArchive = ({ index, tags, instanceSlug }) => {
-const instance = index.find(i => i.slug === instanceSlug)
-return `
+  const instance = index.find(i => i.slug === instanceSlug)
+  return `
 <div className="instance-container">
 <div className="instance-header">
   ${buildInstanceHeader(instance)}
@@ -209,19 +209,19 @@ return `
 </p>
 <ul>
 ${
-  instance.
-  stories
-  .sort((storyA, storyB) => {
-    if (storyA.metadata.title > storyB.metadata.title) {
-      return 1;
+  instance
+  .stories
+    .sort((storyA, storyB) => {
+      if (storyA.metadata.title > storyB.metadata.title) {
+        return 1
     }
-    return -1;
+      return -1
   })
-  .map(story => {
-    const slug = slugifyStory(story)
-    let teacher = tags[story.id].find(t => t.indexOf('metadata:teacher:') === 0)
-    teacher = teacher && teacher.split('metadata:teacher:')[1]
-    return `
+    .map(story => {
+      const slug = slugifyStory(story)
+      let teacher = tags[story.id].find(t => t.indexOf('metadata:teacher:') === 0)
+      teacher = teacher && teacher.split('metadata:teacher:')[1]
+      return `
       <li>
         <a target="blank" rel="noopener" href="${slug}/index.html">
           <h3>
@@ -232,8 +232,8 @@ ${
         </a>
       </li>
       `
-  }).join('\n')
-  }
+    }).join('\n')
+}
 </ul>
 </div>
 `
@@ -254,32 +254,35 @@ const buildTagArchive = ({ index, tags, tag }) => {
   }, [])
 
   // return index.map(instance => {
-    return `
+  return `
 <ul>
 ${
-stories
-.sort((storyA, storyB) => {
-  if (storyA.metadata.title > storyB.metadata.title) {
-    return 1;
+  stories
+    .sort((storyA, storyB) => {
+      if (storyA.metadata.title > storyB.metadata.title) {
+        return 1
   }
-  return -1;
+      return -1
 })
-.map(story => {
-  const slug = slugifyStory(story)
-  let teacher = tags[story.id].find(t => t.indexOf('metadata:teacher:') === 0)
-  teacher = teacher && teacher.split('metadata:teacher:')[1]
-  return `
+    .map(story => {
+      const slug = slugifyStory(story)
+      let teachers = tags[story.id].filter(t => t.indexOf('metadata:teacher:') === 0)
+      teachers = teachers && teachers.map(t => t.split('metadata:teacher:')[1]).join(' et ')
+      let campus = tags[story.id].find(t => t.indexOf('metadata:campus:') === 0)
+      campus = campus && campus.split('metadata:campus:')[1]
+      return `
     <li>
       <a target="blank" rel="noopener" href="${slug}/index.html">
         <h3>
             ${story.metadata.title}${story.metadata.subtitle ? ' - ' + story.metadata.subtitle : ''}
         </h3>
           ${story.metadata.authors.length > 0 ? `<p>Auteur.e.s : ${story.metadata.authors.join(', ')}</p>` : ''}
-          ${teacher && `<p>Enseignant.e : ${teacher}</p>`}
+          ${teachers && `<p>Enseignant.e : ${teachers}</p>`}
+          ${campus && `<p>Campus ${campus.indexOf('Le ') === 0 ? 'du ' + campus.split('Le ')[1] :  'de ' + campus}</p>`}
       </a>
     </li>
     `
-}).join('\n')
+    }).join('\n')
 }
 </ul>
 `
@@ -287,8 +290,8 @@ stories
 }
 
 const buildWholeArchive = ({ index, tags }) => {
-return index.map(instance => {
-  return `
+  return index.map(instance => {
+    return `
 <div className="instance-container">
 <div className="instance-header">
   ${buildInstanceHeader(instance)}
@@ -298,48 +301,50 @@ return index.map(instance => {
 </p>
 <ul>
   ${
-instance.stories.map(story => {
-  const slug = slugifyStory(story)
-  return `
+  instance.stories.map(story => {
+    const slug = slugifyStory(story)
+    return `
       <li>
-        <a href="archive/instances/${instance.slug}/${slug}/index.html">${story.metadata.title}${story.metadata.subtitle ? ' - ' + story.metadata.subtitle : ''}</a> - par ${story.metadata.authors.join()}
+        <a href="archive/instances/${instance.slug}/${slug}/index.html">
+          ${story.metadata.title}${story.metadata.subtitle ? ' - ' + story.metadata.subtitle : ''}
+        </a> - par ${story.metadata.authors.join()}
       </li>
       `
-}).join('\n')
+  }).join('\n')
 }
 </ul>
 </div>
 `
-})
+  })
 }
 
 const buildArchiveIndex = ({
-filter,
-index,
-tags,
-formData
+  filter,
+  index,
+  tags,
+  formData
 }) => {
-let main
-if (!filter) {
-  main = buildWholeArchive({ index, tags })
-} else if (filter.type === 'instance') {
-  main = buildInstanceArchive({ index, tags, instanceSlug: filter.payload.instanceSlug })
-} else if (filter.type === 'tag') {
-  main = buildTagArchive({ index, tags, tag: filter.payload.tag })
-}
+  let main
+  if (!filter) {
+    main = buildWholeArchive({ index, tags })
+  } else if (filter.type === 'instance') {
+    main = buildInstanceArchive({ index, tags, instanceSlug: filter.payload.instanceSlug })
+  } else if (filter.type === 'tag') {
+    main = buildTagArchive({ index, tags, tag: filter.payload.tag })
+  }
 
-let title = ''
-if (formData.title) {
-  title = formData.title
-} else if (!filter) {
-  title = `Archive complète, récupérée le ${new Date().toLocaleString()}`
-} else if (filter.type === 'instance') {
-  title = `Archive de l'instance ${filter.payload.instanceSlug}, récupérée le ${new Date().toLocaleString()}`
-} else if (filter.type === 'tag') {
-  title = `Archive des récits pour l'étiquette ${filter.payload.tag}, récupérée le ${new Date().toLocaleString()}`
-}
-const description = formData.abstract || 'an archive of website made with fonio, a scholarly dissertations editor allowing to build standalone HTML webpages'
-const subtitle = formData.subtitle || 'Un projet porté par FORCCAST et le médialab SciencesPo';
+  let title = ''
+  if (formData.title) {
+    title = formData.title
+  } else if (!filter) {
+    title = `Archive complète, récupérée le ${new Date().toLocaleString()}`
+  } else if (filter.type === 'instance') {
+    title = `Archive de l'instance ${filter.payload.instanceSlug}, récupérée le ${new Date().toLocaleString()}`
+  } else if (filter.type === 'tag') {
+    title = `Archive des récits pour l'étiquette ${filter.payload.tag}, récupérée le ${new Date().toLocaleString()}`
+  }
+  const description = formData.abstract || 'an archive of website made with fonio, a scholarly dissertations editor allowing to build standalone HTML webpages'
+  const subtitle = formData.subtitle || 'Un projet porté par FORCCAST et le médialab SciencesPo'
 return `
 <html>
 <head>
@@ -390,10 +395,10 @@ return `
     <div id="description">
       <p>
       ${
-        linkify(description, 'lien')
-        .trim()
-        .replace(/\n/g, '</p><p>')
-      }
+  linkify(description, 'lien')
+    .trim()
+    .replace(/\n/g, '</p><p>')
+}
       </p>
     </div>
   </header>
