@@ -19,6 +19,11 @@ const StoryCard = ({
   isActive,
   onClick,
 }) => {
+  const {
+    metadata: {
+      publicationConsent
+    }
+  } = story;
   const MAX_STR_LEN = 30;
   const translate = t => t;
 
@@ -60,6 +65,13 @@ const StoryCard = ({
         data-html={true}
         data-for="card-tooltip"
       >{abbrevString(story.metadata.title, MAX_STR_LEN)}</b>
+      <span 
+        data-tip={publicationConsent ? 'publication autorisée' : 'publication non autorisée'}
+        data-for="card-tooltip"
+        className={`tag ${publicationConsent ? 'is-primary': 'is-warning'} is-rounded`}
+      >
+        P
+      </span>
       {
         actions.map(action => {
           const handleClick = () => {

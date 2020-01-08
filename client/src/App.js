@@ -511,7 +511,7 @@ class App extends Component {
       requestArchiveDownload({data, items, format: 'archive', filter, formData}, this.state.password);
     }
 
-    const handleDownload = ({items, format, filter}) => {
+    const handleDownload = ({items, consentedOnly, format, filter}) => {
       let data;
       let fileName;
       if (items === 'instances') {
@@ -519,17 +519,20 @@ class App extends Component {
         fileName = new Date().toISOString() + ' - toutes les instances quinoa';
       } else if (items === 'stories') {
         if (filter) {
-          let filteredStories;
+          let filteredStories = stories;
+          if (consentedOnly) {
+            filteredStories = filteredStories.filter(s => s.metadata.publicationConsent)
+          }
           let suf = '';
           if (filter.type === 'instance') {
             const instanceSlug = filter.payload.instanceSlug;
-            filteredStories = stories.filter(s => s.metadata.instanceSlug === instanceSlug);
+            filteredStories = filteredStories.filter(s => s.metadata.instanceSlug === instanceSlug);
             suf = ` pour l'instance ${instanceSlug}`;
             fileName = new Date().toISOString() + ' - récits quinoa' + suf;
             data = filteredStories.map(formatStoryForCsv);
           } else if (filter.type === 'tag') {
             const tag = filter.payload.tag;
-            filteredStories = stories.filter(s => s.metadata.tags.includes(tag));
+            filteredStories = filteredStories.filter(s => s.metadata.tags.includes(tag));
             suf = ` pour le tag ${tag}`;
             fileName = new Date().toISOString() + ' - récits quinoa' + suf;
             data = filteredStories.map(formatStoryForCsv);

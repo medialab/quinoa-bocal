@@ -34,6 +34,7 @@ const WebsiteModal = ({
 }) => {
   // const [data, setData] = useState(inputData)
   const [formData, setFormData] = useState({})
+  const [consentedOnly, setConsentedOnly] = useState(false);
 
   const {
     archiveName = '',
@@ -64,7 +65,11 @@ const WebsiteModal = ({
     setFormField('title', buildDefaultTitle(inputData))
   }, [inputData])
   const handleDownload = () => {
-    onDownload(inputData, formData)
+    let data = inputData;
+    if (consentedOnly) {
+      data = data.filter(d => d.metadata.publicationConsent)
+    }
+    onDownload(data, formData)
   }
   return (
     <ModalCard
@@ -77,6 +82,7 @@ const WebsiteModal = ({
           <div>
             <form onSubmit={e => {e.preventDefault();handleDownload()}}>
               <StretchedLayoutContainer style={{width: '100%'}}>
+              
                 <Field>
                   <Label>
                     Titre
@@ -119,6 +125,19 @@ const WebsiteModal = ({
                 </Field> */}
               </StretchedLayoutContainer>
             </form>
+            <Field style={{display: 'flex'}}>
+                  <Control>
+                    <input 
+                      type="radio" 
+                      checked={consentedOnly}
+                      onClick={() => setConsentedOnly(!consentedOnly)}  
+                    />
+                  </Control>
+                  <Label>
+                  Intégrer uniquement les récits dont la publication a été consentie
+                  </Label>
+                  
+                </Field>
             <StretchedLayoutContainer isDirection="horizontal">
               <StretchedLayoutItem isFlex={1}>
                 <Button isFullWidth onClick={() => handleDownload()} isColor="primary">

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useState} from 'react';
 import Tooltip from 'react-tooltip';
 
 import {
@@ -17,6 +17,7 @@ const DownloadModal = ({
   tags = [],
   onDownload,
 }) => {
+  const [consentedOnly, setConsentedOnly] = useState(false);
   return (
     <ModalCard
       isActive={isActive}
@@ -25,6 +26,7 @@ const DownloadModal = ({
       style={{width: '90%'}}
       mainContent={
         <div>
+          
           <div>
             <h3 className="title is-5">
               Télécharger toutes les instances
@@ -64,17 +66,17 @@ const DownloadModal = ({
                         </a>
                       </td>
                       <td>
-                        <Button onClick={() => onDownload({items: 'stories', format: 'table', filter: {type: 'instance', payload: {instanceSlug: instance.slug}}})} isColor="info">
+                        <Button onClick={() => onDownload({items: 'stories', consentedOnly, format: 'table', filter: {type: 'instance', payload: {instanceSlug: instance.slug}}})} isColor="info">
                           Télécharger la liste des récits
                         </Button>
                       </td>
                       <td>
-                        <Button onClick={() => onDownload({items: 'stories', format: 'archive', filter: {type: 'instance', payload: {instanceSlug: instance.slug}}})} isColor="warning">
+                        <Button onClick={() => onDownload({items: 'stories', consentedOnly, format: 'archive', filter: {type: 'instance', payload: {instanceSlug: instance.slug}}})} isColor="warning">
                           Télécharger l'archive
                         </Button>
                       </td>
                       <td>
-                        <Button onClick={() => onDownload({items: 'stories', format: 'website', filter: {type: 'instance', payload: {instanceSlug: instance.slug}}})} isColor="primary">
+                        <Button onClick={() => onDownload({items: 'stories', consentedOnly, format: 'website', filter: {type: 'instance', payload: {instanceSlug: instance.slug}}})} isColor="primary">
                           Fabriquer un site ...
                         </Button>
                       </td>
@@ -122,6 +124,18 @@ const DownloadModal = ({
               }
               </tbody>
             </table>
+          </div>
+          <div>
+            <div className="field">
+              <input 
+                type="radio" 
+                checked={consentedOnly}
+                onClick={() => setConsentedOnly(!consentedOnly)}  
+              />
+              <label style={{marginLeft: '1rem'}}>
+                Intégrer uniquement les récits dont la publication a été consentie
+              </label>
+            </div>
           </div>
           <Tooltip id="tooltip" />
         </div>
