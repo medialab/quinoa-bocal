@@ -1,5 +1,4 @@
 import React, {useState, useEffect} from 'react';
-import Tooltip from 'react-tooltip';
 
 import {
   ModalCard,
@@ -9,7 +8,6 @@ import {
   Field,
   Label,
   Control,
-  Level,
 } from 'quinoa-design-library/components';
 
 const buildDefaultTitle = data => {
@@ -37,11 +35,9 @@ const WebsiteModal = ({
   const [consentedOnly, setConsentedOnly] = useState(false);
 
   const {
-    archiveName = '',
     title = '',
     subtitle = '',
     abstract = '',
-    publicationUrl = ''
   } = formData;
 
   const setFormField = (key, value) => {
@@ -55,9 +51,7 @@ const WebsiteModal = ({
   }
   const handleTitleChange = e => handleFieldChange(e, 'title')
   const handleSubtitleChange = e => handleFieldChange(e, 'subtitle')
-  const handleArchiveNameChange = e => handleFieldChange(e, 'archiveName')
   const handleAbstractChange = e => handleFieldChange(e, 'abstract')
-  const handlePublicationUrlChange = e => handleFieldChange(e, 'publicationUrl')
   useEffect(() => {
     if (inputData.fileName) {
       setFormField('archiveName', inputData.fileName)
