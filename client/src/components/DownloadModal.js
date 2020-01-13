@@ -9,15 +9,56 @@ import {
   Level,
 } from 'quinoa-design-library/components';
 
+const filterHasStories = (filterValues, value) => {
+  return filterValues[value] && Object.keys(filterValues[value]).length > 0;
+}
+
+const TagDownloadItem = ({
+  tags,
+  onDownload,
+}) => (
+  <table className="table flexed">
+    <tbody>
+    {
+      tags.map((tag) => {
+        return (
+          <tr key={tag}>
+            <td>
+                {tag}
+            </td>
+            <td>
+              <Button onClick={() => onDownload({format: 'table', tag})} isColor="info">
+                Télécharger la liste des récits
+              </Button>
+            </td>
+            <td>
+              <Button onClick={() => onDownload({format: 'archive', tag})} isColor="warning">
+                Télécharger l'archive
+              </Button>
+            </td>
+            <td>
+              <Button onClick={() => onDownload({format: 'website', tag})} isColor="primary">
+                Fabriquer un site ...
+              </Button>
+            </td>
+          </tr>
+        )
+      })
+    }
+    </tbody>
+  </table>
+)
 
 const DownloadModal = ({
   isActive,
   onClose,
   instances = [],
   tags = [],
+  visibleStories=[],
   onDownload,
 }) => {
   const [consentedOnly, setConsentedOnly] = useState(false);
+  const visibleStoriesIds = visibleStories.map(story => story.id);
   return (
     <ModalCard
       isActive={isActive}
@@ -46,6 +87,25 @@ const DownloadModal = ({
             </StretchedLayoutContainer>
           </div>
           <Level/>
+          <div>
+            <h3 className="title is-5">
+              Télécharger seulement les récits affichés en fonction des filtres actuellement cochés
+            </h3>
+            <StretchedLayoutContainer>
+              <StretchedLayoutItem>
+                <Button onClick={() => onDownload({items: 'stories', format: 'table', filter:{type: 'ids', ids: visibleStoriesIds}})} isColor="info">
+                  Télécharger le tableau des récits sélectionnés
+                </Button>
+                <Button onClick={() => onDownload({items: 'stories', format: 'archive', filter:{type: 'ids', ids: visibleStoriesIds}})} isColor="warning">
+                  Télécharger l'archive des récits sélectionnés
+                </Button>
+                <Button onClick={() => onDownload({items: 'stories', consentedOnly, format: 'website', filter:{type: 'ids', ids: visibleStoriesIds}})} isColor="primary">
+                  Fabriquer un site ...
+                </Button>
+              </StretchedLayoutItem>
+            </StretchedLayoutContainer>
+          </div>
+          <Level />
           <div>
             {instances.length > 0 &&
               <h3 className="title is-5">
@@ -94,36 +154,10 @@ const DownloadModal = ({
                 Télécharger les récits attachés à une étiquette
               </h3>
             }
-            <table className="table flexed">
-              <tbody>
-              {
-                tags.map((tag) => {
-                  return (
-                    <tr key={tag}>
-                      <td>
-                          {tag}
-                      </td>
-                      <td>
-                        <Button onClick={() => onDownload({items: 'stories', format: 'table', filter: {type: 'tag', payload: {tag}}})} isColor="info">
-                          Télécharger la liste des récits
-                        </Button>
-                      </td>
-                      <td>
-                        <Button onClick={() => onDownload({items: 'stories', format: 'archive', filter: {type: 'tag', payload: {tag}}})} isColor="warning">
-                          Télécharger l'archive
-                        </Button>
-                      </td>
-                      <td>
-                        <Button onClick={() => onDownload({items: 'stories', format: 'website', filter: {type: 'tag', payload: {tag}}})} isColor="primary">
-                          Fabriquer un site ...
-                        </Button>
-                      </td>
-                    </tr>
-                  )
-                })
-              }
-              </tbody>
-            </table>
+            <TagDownloadItem
+              tags={tags}
+              onDownload={({format, tag}) => onDownload({items: 'stories', format, filter: {type: 'tag', payload: {tag}}})}
+            />
           </div>
           <div>
             <div className="field">

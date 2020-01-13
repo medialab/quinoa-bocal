@@ -287,6 +287,31 @@ const archiveHandler = (req, res) => {
               })
             })
           }, Promise.resolve())
+        } else if (filter.type === 'ids') {
+          console.log('archive bundler :: building from ids')
+          console.log(filter)
+          const ids = filter.ids
+          const folders = index.reduce((result, instance) => {
+            const storiesIds = instance.stories.map(s => s.id)
+              .filter(sId => ids.includes(sId))
+            return [
+              ...result,
+              ...storiesIds.map(storyId => ({
+                instanceSlug: instance.slug,
+                storyId
+              }))
+            ]
+          }, [])
+          console.log('archive bundler :: building static stories')
+          return folders.reduce((cur, { instanceSlug, storyId }, index) => {
+            return cur.then(() => {
+              console.log('building static story %s of %s', index + 1, folders.length)
+              return buildStaticStory({
+                dataPath: `${dataBasePath}/instances/${instanceSlug}/${storyId}/${storyId}.json`, 
+                jobBase: `${jobBase}/data`, // `${jobBase}/data/stories/${storyId}`
+              })
+            })
+          }, Promise.resolve())
         }
       })
       .then(() => {

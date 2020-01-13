@@ -536,6 +536,10 @@ class App extends Component {
             suf = ` pour le tag ${tag}`;
             fileName = new Date().toISOString() + ' - récits quinoa' + suf;
             data = filteredStories.map(formatStoryForCsv);
+          } else if (filter.type === 'ids') {
+            filteredStories = filteredStories.filter(s => filter.ids.includes(s.id));
+            fileName = new Date().toISOString() + ' - récits quinoa' + suf;
+            data = filteredStories.map(formatStoryForCsv);
           }
         } else {
           data = stories.map(formatStoryForCsv);
@@ -764,6 +768,7 @@ class App extends Component {
             isActive={downloadOptionsVisible}
             instances={instances}
             tags={tagsList}
+            visibleStories={visibleStories}
             onDownload={handleDownload}
             onClose={() => {
               this.setState({
@@ -775,6 +780,7 @@ class App extends Component {
             isActive={websiteModalVisible}
             data={websiteModalData}
             onDownload={handleDownloadWebsite}
+            visibleStories={visibleStories}
             onClose={() => {
               this.setState({
                 websiteModalVisible: false,
