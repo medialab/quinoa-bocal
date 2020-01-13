@@ -33,6 +33,8 @@ In a terminal/bash window located in the `quinoa-bocal` folder, paste the follow
 npm run dev
 ```
 
+In development, the default password for accessing the interface is `admin`.
+
 # Deployment
 
 Quinoa project is currently not set for deployment on a server. TODO ...
