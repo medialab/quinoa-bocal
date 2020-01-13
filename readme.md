@@ -23,6 +23,7 @@ Open a terminal/bash window in the folder in which you wish to install the softw
 git clone https://github.com/medialab/quinoa-bocal
 cd quinoa-bocal
 npm run data:bootstrap
+npm install
 ```
 
 # Development
