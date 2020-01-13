@@ -17,6 +17,9 @@
     "url": "git+https://github.com/medialab/quinoa-bocal.git"
   },
   "author": "medialab",
+  "engines" : { 
+    "node" : ">=9.0.0 <11.0.0" 
+  },
   "license": "GPL-3.0-or-later",
   "bugs": {
     "url": "https://github.com/medialab/quinoa-bocal/issues"
